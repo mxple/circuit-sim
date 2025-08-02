@@ -1,26 +1,19 @@
-use web_sys::*;
-use macroquad::prelude::*;
+use egui_macroquad::egui;
+use egui_macroquad::macroquad::prelude::*;
 
-#[macroquad::main("egui with macroquad")]
+#[macroquad::main("egui + macroquad wasm")]
 async fn main() {
     loop {
-        clear_background(WHITE);
+        clear_background(MAGENTA);
 
-        // Process keys, mouse etc.
-
-        egui_macroquad::ui(|egui_ctx| {
-            egui::Window::new("egui ❤ macroquad")
-                .show(egui_ctx, |ui| {
-                    ui.label("Test");
-                });
+        egui_macroquad::ui(|ctx| {
+            egui::Window::new("Hello").show(ctx, |ui| {
+                ui.label("Running in WASM!");
+            });
         });
 
-        // Draw things before egui
-
         egui_macroquad::draw();
-        
-        // Draw things after egui
-
         next_frame().await;
     }
 }
+
