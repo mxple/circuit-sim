@@ -1,15 +1,18 @@
-use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
-#[macroquad::main("egui + macroquad wasm")]
+use frontend::gui::App;
+
+mod frontend;
+
+#[macroquad::main("circuitsim")]
 async fn main() {
+    let mut gui = App::new();
+
     loop {
-        clear_background(MAGENTA);
+        clear_background(WHITE);
 
         egui_macroquad::ui(|ctx| {
-            egui::Window::new("Hello").show(ctx, |ui| {
-                ui.label("Running in WASM!");
-            });
+            gui.update(ctx);
         });
 
         egui_macroquad::draw();
