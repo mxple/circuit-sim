@@ -1,49 +1,34 @@
 use egui_macroquad::macroquad::prelude::*;
 
-use super::camera::Camera;
+use super::camera::GridCamera;
 
-pub fn draw_grid(camera: &Camera) {
+pub fn draw_grid(camera: &GridCamera) {
     let (view_min, view_max) = camera.get_view_bounds();
     
-    let start_x = view_min.x.floor();
-    let end_x = view_max.x.ceil();
-    let start_y = view_min.y.floor();
-    let end_y = view_max.y.ceil();
+    let grid_spacing = 1.0; // Adjust this for your desired grid spacing
     
-    let color = Color::new(0.3, 0.3, 0.3, 0.5);
+    // Calculate grid lines that are visible
+    let grid_start_x = (view_min.x / grid_spacing).floor() * grid_spacing;
+    let grid_end_x = (view_max.x / grid_spacing).ceil() * grid_spacing;
+    let grid_start_y = (view_min.y / grid_spacing).floor() * grid_spacing;
+    let grid_end_y = (view_max.y / grid_spacing).ceil() * grid_spacing;
 
-    let mut x = start_x;
-    while x <= end_x {
-        let start_screen = camera.world_to_screen(Vec2::new(x, view_min.y));
-        let end_screen = camera.world_to_screen(Vec2::new(x, view_max.y));
-        
-        draw_line(
-            start_screen.x,
-            start_screen.y,
-            end_screen.x,
-            end_screen.y,
-            1.0,
-            color,
-        );
-        
-        x += 1.0;
+    let color = Color::new(0.3, 0.3, 0.3, 0.5);
+    // let line_thickness = 1.0 / camera.zoom;
+    let line_thickness = camera.get_pixel_thickness();
+
+    // Draw vertical lines
+    let mut x = grid_start_x;
+    while x <= grid_end_x {
+        draw_line(x, grid_start_y, x, grid_end_y, line_thickness, color);
+        x += grid_spacing;
     }
-    
-    let mut y = start_y;
-    while y <= end_y {
-        let start_screen = camera.world_to_screen(Vec2::new(view_min.x, y));
-        let end_screen = camera.world_to_screen(Vec2::new(view_max.x, y));
-        
-        draw_line(
-            start_screen.x,
-            start_screen.y,
-            end_screen.x,
-            end_screen.y,
-            1.0,
-            color,
-        );
-        
-        y += 1.0;
+
+    // Draw horizontal lines
+    let mut y = grid_start_y;
+    while y <= grid_end_y {
+        draw_line(grid_start_x, y, grid_end_x, y, line_thickness, color);
+        y += grid_spacing;
     }
 }
 

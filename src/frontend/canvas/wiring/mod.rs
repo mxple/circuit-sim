@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use wire::{Wire, WireVariant};
 
-use super::camera::Camera;
+use super::camera::GridCamera;
 
 mod wire;
 
@@ -26,7 +26,7 @@ impl WireSystem {
         }
     }
 
-    pub fn handle_input(&mut self, camera: &Camera) {
+    pub fn handle_input(&mut self, camera: &GridCamera) {
         // Get mouse position and snap to grid
         let mouse_screen = Vec2::new(mouse_position().0, mouse_position().1);
         let mouse_world = camera.screen_to_world(mouse_screen);
@@ -149,7 +149,7 @@ impl WireSystem {
         WireVariant::new(north, east, south, west, false)
     }
 
-    pub fn draw_wires(&self, camera: &Camera) {
+    pub fn draw_wires(&self, camera: &GridCamera) {
         let (view_min, view_max) = camera.get_view_bounds();
         
         for wire in self.wires.values() {
@@ -160,62 +160,52 @@ impl WireSystem {
         }
     }
 
-    pub fn draw_preview(&self, camera: &Camera) {
+    pub fn draw_preview(&self, camera: &GridCamera) {
         if let WireDrawState::StartSelected(start_pos) = self.draw_state {
-            // Draw start position highlight
-            let start_screen = camera.world_to_screen(start_pos + vec2(0.5, 0.5));
-            let size = camera.zoom * 0.9;
-            draw_rectangle_lines(
-                start_screen.x - size / 2.0,
-                start_screen.y - size / 2.0,
-                size,
-                size,
-                3.0,
-                GREEN,
-            );
-
-            // Draw preview path if shift is held
+            let size = 0.875;
+            let rect_x = start_pos.x + (1.0 - size) / 2.0;
+            let rect_y = start_pos.y + (1.0 - size) / 2.0;
+    
+            draw_rectangle_lines(rect_x, rect_y, size, size, camera.get_pixel_thickness() * 2.0, GREEN);
+    
             if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
                 let mouse_screen = Vec2::new(mouse_position().0, mouse_position().1);
                 let mouse_world = camera.screen_to_world(mouse_screen);
                 let end_pos = Vec2::new(mouse_world.x.floor(), mouse_world.y.floor());
-
+    
                 self.draw_preview_path(start_pos, end_pos, camera);
             }
         }
     }
 
-    fn draw_preview_path(&self, start: Vec2, end: Vec2, camera: &Camera) {
+    fn draw_preview_path(&self, start: Vec2, end: Vec2, camera: &GridCamera) {
         if start == end {
             return;
         }
-
-        // Draw preview L-shaped path
+    
+        let width = camera.get_pixel_thickness();
         let corner = Vec2::new(start.x, end.y);
-        
-        // Vertical line preview
+    
         if start.y != corner.y {
-            let line_start = camera.world_to_screen(start + vec2(0.5, 0.5));
-            let line_end = camera.world_to_screen(corner + vec2(0.5, 0.5));
-            draw_line(line_start.x, line_start.y, line_end.x, line_end.y, 2.0, Color::new(0.0, 1.0, 0.0, 0.6));
+            let line_start = start + vec2(0.5, 0.5);
+            let line_end = corner + vec2(0.5, 0.5);
+            draw_line(line_start.x, line_start.y, line_end.x, line_end.y, width, Color::new(0.0, 1.0, 0.0, 0.6));
         }
-
-        // Horizontal line preview
+    
         if corner.x != end.x {
-            let line_start = camera.world_to_screen(corner + vec2(0.5, 0.5));
-            let line_end = camera.world_to_screen(end + vec2(0.5, 0.5));
-            draw_line(line_start.x, line_start.y, line_end.x, line_end.y, 2.0, Color::new(0.0, 1.0, 0.0, 0.6));
+            let line_start = corner + vec2(0.5, 0.5);
+            let line_end = end + vec2(0.5, 0.5);
+            draw_line(line_start.x, line_start.y, line_end.x, line_end.y, width, Color::new(0.0, 1.0, 0.0, 0.6));
         }
-
-        // Draw end position highlight
-        let end_screen = camera.world_to_screen(end + vec2(0.5, 0.5));
-        let size = camera.zoom * 0.9;
+    
+        let size = 0.9;
+        let end_center = end + vec2(0.5, 0.5);
         draw_rectangle_lines(
-            end_screen.x - size / 2.0,
-            end_screen.y - size / 2.0,
+            end_center.x - size / 2.0,
+            end_center.y - size / 2.0,
             size,
             size,
-            3.0,
+            width * 2.0,
             Color::new(0.0, 1.0, 0.0, 0.8),
         );
     }

@@ -65,7 +65,7 @@ impl WireVariant {
 }
 use std::fmt;
 
-use crate::frontend::canvas::camera::Camera;
+use crate::frontend::canvas::camera::GridCamera;
 
 impl fmt::Display for WireVariant {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -93,32 +93,26 @@ impl Wire {
         Self { position, variant }
     }
 
-    pub fn draw(&self, camera: &Camera) {
+    pub fn draw(&self, camera: &GridCamera) {
         let width: f32 = 0.2;
-        let screen_pos = camera.world_to_screen(self.position);
-        let scale = camera.zoom;
+        let pos = self.position;
+        let scale = 1.0;
     
         let center = (scale - width * scale) / 2.0;
         let size = width * scale;
         let color = GREEN;
-        
-        // Check if this is an overpass (all 4 connections but not a junction)
-        let is_overpass = self.variant.is_overpass();
-        let gap = if is_overpass { size * 0.75 } else { 0.0 }; // 30% gap for overpasses
     
-        // if (self.variant.is_junction()) {
-        //     println!("{}, {}", self.position.x, self.position.y);
-        // }
-
+        let is_overpass = self.variant.is_overpass();
+        let gap = if is_overpass { size * 0.75 } else { 0.0 };
+    
         draw_rectangle(
-            screen_pos.x + center,
-            screen_pos.y + center,
+            pos.x + center,
+            pos.y + center,
             size,
             size,
             color,
         );
     
-        // North
         if self.variant.has_north() {
             let height = if is_overpass {
                 center + size / 2.0 - gap
@@ -126,51 +120,48 @@ impl Wire {
                 center + size / 2.0
             };
             draw_rectangle(
-                screen_pos.x + center,
-                screen_pos.y,
+                pos.x + center,
+                pos.y,
                 size,
                 height,
                 color,
             );
         }
-        
-        // South
+    
         if self.variant.has_south() {
             let y_start = if is_overpass {
-                screen_pos.y + center + size / 2.0 + gap
+                pos.y + center + size / 2.0 + gap
             } else {
-                screen_pos.y + center + size / 2.0
+                pos.y + center + size / 2.0
             };
             let height = if is_overpass {
-                center + size / 2.0 - gap / 2.0 // Shorter to account for gap
+                center + size / 2.0 - gap / 2.0
             } else {
                 center + size / 2.0
             };
             draw_rectangle(
-                screen_pos.x + center,
+                pos.x + center,
                 y_start,
                 size,
                 height,
                 color,
             );
         }
-        
-        // East
+    
         if self.variant.has_east() {
             draw_rectangle(
-                screen_pos.x + center + size / 2.0,
-                screen_pos.y + center,
+                pos.x + center + size / 2.0,
+                pos.y + center,
                 center + size / 2.0,
                 size,
                 color,
             );
         }
-        
-        // West
+    
         if self.variant.has_west() {
             draw_rectangle(
-                screen_pos.x,
-                screen_pos.y + center,
+                pos.x,
+                pos.y + center,
                 center + size / 2.0,
                 size,
                 color,

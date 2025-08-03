@@ -1,10 +1,7 @@
-use egui::Context;
 use egui_macroquad::macroquad::prelude::*;
 use frontend::gui::profiler::Profiler;
 
-use std::time::{Duration, Instant};
-
-use frontend::canvas::camera::Camera;
+use frontend::canvas::camera::GridCamera;
 use frontend::canvas::grid::draw_grid;
 use frontend::canvas::wiring::WireSystem;
 use frontend::gui::App;
@@ -12,7 +9,7 @@ mod frontend;
 
 #[macroquad::main("circuitsim")]
 async fn main() {
-    let mut camera = Camera::new();
+    let mut camera = GridCamera::new();
     let mut gui = App::new();
     let mut ws = WireSystem::new();
     let mut profiler = Profiler::new(0.05);
@@ -38,9 +35,13 @@ async fn main() {
         profiler.start("draw");
 
         clear_background(Color::new(0.1, 0.1, 0.1, 1.0));
+
+        set_camera(&camera);
+
         draw_grid(&camera);
         ws.draw_preview(&camera);
         ws.draw_wires(&camera);
+
         egui_macroquad::draw();
 
         profiler.end("draw");
