@@ -1,20 +1,31 @@
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
-use component_selector::CircuitComponentType;
+use component_utils::CircuitComponentType;
 
+mod component_utils;
 mod component_selector;
+mod toolbar;
 
 pub struct App {
     expanded: bool,
     selected_component: Option<CircuitComponentType>,
+    hotbar_selections: [Option<CircuitComponentType>; Self::NUM_HOTBAR_BUTTONS],
+    hovered_hotbar_button: Option<usize>,
+    dragged_component: Option<CircuitComponentType>,
 }
 
-
 impl App {
+    pub const NUM_HOTBAR_BUTTONS: usize = 5;
+    pub const HOTBAR_BUTTON_LABELS: [&'static str; Self::NUM_HOTBAR_BUTTONS] = [
+        "1", "2", "3", "4", "5",
+    ];
     pub fn new() -> Self {
         Self {
             expanded: true,
             selected_component: None,
+            hotbar_selections: [None; Self::NUM_HOTBAR_BUTTONS],
+            hovered_hotbar_button: None,
+            dragged_component: None,
         }
     }
 
@@ -27,6 +38,8 @@ impl App {
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
+        self.hovered_hotbar_button = None;
+        self.dragged_component = None;
         use egui::*;
 
         TopBottomPanel::top("menu").show(ctx, |ui| {
@@ -75,21 +88,35 @@ impl App {
                 });
             });
 
-        SidePanel::left("toggle_button_panel")
-            .exact_width(8.0)
-            .frame(Frame::NONE)
-            .show_separator_line(false)
-            .resizable(false)
-            .show(ctx, |ui| {
-                let icon = if self.expanded { "⏴" } else { "⏵" };
-                if ui.add_sized(ui.available_size(), Button::new(icon)).clicked() {
-                    self.expanded = !self.expanded;
-                }
-            });
+
+        // SidePanel::left("toggle_button_panel")
+        //     .frame(Frame::NONE)
+        //     .exact_width(8.0)
+        //     .show_separator_line(false)
+        //     .resizable(false)
+        //     .show(ctx, |ui| {
+        //         let icon = if self.expanded { "⏴" } else { "⏵" };
+        //         println!("{}", ui.available_width());
+        //         if ui.add_sized(ui.available_size(), Button::new(icon)).clicked() {
+        //             self.expanded = !self.expanded;
+        //         }
+        //     });
 
         SidePanel::right("Right").show(ctx, |ui| {
             ui.label("test1");
         });
+        
+        self.render_toolbar(ctx);
+
+        // Ensure that each component can only be in one hotbar slot at a time
+        if let Some(hovered_index) = self.hovered_hotbar_button && self.dragged_component.is_some() {
+            for i in 0..Self::NUM_HOTBAR_BUTTONS {
+                if self.hotbar_selections[i] == self.dragged_component {
+                    self.hotbar_selections[i] = self.hotbar_selections[hovered_index];
+                    break;
+                }
+            }
+            self.hotbar_selections[hovered_index] = self.dragged_component;
+        }
     }
 }
-
