@@ -84,7 +84,7 @@ impl Camera {
         let mouse_world = self.screen_to_world(mouse_screen);
         
         egui::Window::new("Camera Info")
-            .default_pos(egui::pos2(10.0, 10.0))
+            .default_pos(egui::pos2(500.0, 10.0))
             .resizable(false)
             .show(ctx, |ui| {
                 ui.label(format!("Camera Position: ({:.1}, {:.1})", self.position.x, self.position.y));

@@ -1,8 +1,5 @@
-use egui::Context;
 use egui_macroquad::macroquad::prelude::*;
 use frontend::gui::profiler::Profiler;
-
-use std::time::{Duration, Instant};
 
 use frontend::canvas::camera::Camera;
 use frontend::canvas::grid::draw_grid;
@@ -19,6 +16,9 @@ async fn main() {
     profiler.register("logic");
     profiler.register("draw");
     profiler.register("frame");
+    
+    request_new_screen_size(1280.0, 720.0);
+    next_frame().await;
 
     loop {
         profiler.start("logic");

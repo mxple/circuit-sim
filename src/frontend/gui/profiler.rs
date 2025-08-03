@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use std::{
     collections::HashMap,
-    time::{Duration, Instant},
+    time::Instant,
 };
 
 const HISTORY_SIZE: usize = 256;
@@ -68,7 +68,7 @@ impl Profiler {
 
     pub fn update(&self, ctx: &egui::Context) {
         egui::Window::new("Profiler")
-            .default_pos(egui::pos2(10.0, 10.0))
+            .default_pos(egui::pos2(600.0, 60.0))
             .resizable(false)
             .show(ctx, |ui| {
                 for (name, metric) in &self.metrics {

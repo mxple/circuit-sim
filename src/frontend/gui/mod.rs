@@ -1,18 +1,30 @@
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
+use component_selector::CircuitComponentType;
 
 pub mod profiler;
+mod component_selector;
 
 pub struct App {
     expanded: bool,
-    // add more fields as needed
+    selected_component: Option<CircuitComponentType>,
 }
+
 
 impl App {
     pub fn new() -> Self {
         Self {
             expanded: true,
+            selected_component: None,
         }
+    }
+
+    pub fn get_selected_component(&mut self) -> Option<CircuitComponentType> {
+        self.selected_component.clone()
+    }
+
+    pub fn set_selected_component(&mut self, component: Option<CircuitComponentType>) {
+        self.selected_component = component;
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
@@ -39,9 +51,29 @@ impl App {
         });
 
         SidePanel::left("Circuits")
+            .min_width(screen_width() / 6.)
+            .max_width(screen_width() / 6.)
             .resizable(false)
             .show_animated(ctx, self.expanded, |ui| {
-                ui.label("test");
+                ui.label("Components");
+                CollapsingHeader::new("Gates").show(ui, |ui| {
+                    let gates = [
+                        CircuitComponentType::AndGate,
+                        CircuitComponentType::OrGate,
+                        CircuitComponentType::NandGate,
+                        CircuitComponentType::NorGate,
+                        CircuitComponentType::XorGate,
+                        CircuitComponentType::XnorGate,
+                        CircuitComponentType::NotGate,
+                    ];
+                    for gate in gates {
+                        self.circuit_component_button(
+                            ui,
+                            egui::Vec2::new(ui.available_size().x, 60.0),
+                            gate,
+                        );
+                    }
+                });
             });
 
         SidePanel::left("toggle_button_panel")
@@ -57,7 +89,7 @@ impl App {
             });
 
         SidePanel::right("Right").show(ctx, |ui| {
-            ui.button("test1");
+            ui.label("test1");
         });
     }
 }
