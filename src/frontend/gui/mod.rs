@@ -89,18 +89,30 @@ impl App {
             });
 
 
-        // SidePanel::left("toggle_button_panel")
-        //     .frame(Frame::NONE)
-        //     .exact_width(8.0)
-        //     .show_separator_line(false)
-        //     .resizable(false)
-        //     .show(ctx, |ui| {
-        //         let icon = if self.expanded { "⏴" } else { "⏵" };
-        //         println!("{}", ui.available_width());
-        //         if ui.add_sized(ui.available_size(), Button::new(icon)).clicked() {
-        //             self.expanded = !self.expanded;
-        //         }
-        //     });
+        SidePanel::left("toggle_button_panel")
+            .frame(Frame::NONE)
+            .exact_width(10.0)
+            .show_separator_line(false)
+            .resizable(false)
+            .show(ctx, |ui| {
+                let icon = if self.expanded { "⏴" } else { "⏵" };
+                let (rect, response) = ui.allocate_exact_size(ui.available_size(), Sense::all());
+                let painter = ui.painter_at(rect);
+                if response.clicked() {
+                    self.expanded = !self.expanded;
+                } else if response.hovered() {
+                    painter.rect_filled(rect, 0.0, Color32::from_rgb(70, 70, 70));
+                } else {
+                    painter.rect_filled(rect, 0.0, Color32::from_rgb(50, 50, 50));
+                }
+                painter.text(
+                    rect.center(),
+                    egui::Align2::CENTER_CENTER,
+                    icon,
+                    egui::TextStyle::Body.resolve(ui.style()),
+                    Color32::LIGHT_GRAY,
+                );
+            });
 
         SidePanel::right("Right").show(ctx, |ui| {
             ui.label("test1");
