@@ -168,8 +168,6 @@ dependencies = [
  "egui-macroquad",
  "epaint",
  "macroquad",
- "once_cell",
- "web-sys",
 ]
 
 [[package]]
