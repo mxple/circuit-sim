@@ -9,6 +9,17 @@ mod profiler;
 
 #[macroquad::main("circuitsim")]
 async fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    let mut enable_camera_debug = false;
+    let mut enable_profiler_debug = false;
+    for arg in args {
+        if arg == "c" {
+            enable_camera_debug = true;
+        }
+        if arg == "p" {
+            enable_profiler_debug = true;
+        }
+    }
     let mut camera = GridCamera::new();
     let mut gui = App::new();
     let mut ws = WireSystem::new();
@@ -28,8 +39,12 @@ async fn main() {
 
             egui_macroquad::ui(|ctx| {
                 gui.update(ctx);
-                camera.draw_egui_ui(ctx);
-                profiler::profile_update(ctx);
+                if enable_camera_debug {
+                    camera.draw_egui_ui(ctx);
+                }
+                if enable_profiler_debug {
+                    profiler::profile_update(ctx);
+                }
             });
         }
 
