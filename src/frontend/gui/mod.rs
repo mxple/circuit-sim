@@ -1,8 +1,6 @@
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
-pub mod profiler;
-
 pub struct App {
     expanded: bool,
     // add more fields as needed

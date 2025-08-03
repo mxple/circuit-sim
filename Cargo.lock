@@ -167,6 +167,7 @@ dependencies = [
  "egui",
  "egui-macroquad",
  "macroquad",
+ "once_cell",
  "web-sys",
 ]
 

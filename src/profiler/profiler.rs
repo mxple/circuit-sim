@@ -1,7 +1,8 @@
 use macroquad::prelude::*;
 use std::{
     collections::HashMap,
-    time::{Duration, Instant},
+    time::Instant,
+    sync::{Arc, Mutex, OnceLock},
 };
 
 const HISTORY_SIZE: usize = 256;
@@ -20,24 +21,27 @@ pub struct Profiler {
     alpha: f32, // smoothing factor
 }
 
+static PROFILER: OnceLock<Arc<Mutex<Profiler>>> = OnceLock::new();
+
 impl Profiler {
+    pub fn global() -> Arc<Mutex<Profiler>> {
+        PROFILER.get_or_init(|| {
+            Arc::new(Mutex::new(Profiler::new(0.1)))
+        }).clone()
+    }
+
     pub fn new(alpha: f32) -> Self {
         Self {
             metrics: HashMap::new(),
             alpha,
         }
     }
-
-    pub fn register(&mut self, name: &str) {
-        self.metrics
+    
+    pub fn start(&mut self, name: &str) {
+        let metric = self.metrics
             .entry(name.to_string())
             .or_insert_with(Metric::default);
-    }
-
-    pub fn start(&mut self, name: &str) {
-        if let Some(metric) = self.metrics.get_mut(name) {
-            metric.last_start = Some(Instant::now());
-        }
+        metric.last_start = Some(Instant::now());
     }
 
     pub fn end(&mut self, name: &str) {
@@ -71,14 +75,26 @@ impl Profiler {
             .default_pos(egui::pos2(10.0, 10.0))
             .resizable(false)
             .show(ctx, |ui| {
-                for (name, metric) in &self.metrics {
-                    let p99 = Self::compute_p99(&metric.history);
-                    let text = format!(
-                        "{name}: avg {:.2} ms, p99 {:.2} ms, max {:.2} ms",
-                        metric.avg, p99, metric.max,
-                    );
-                    ui.label(text);
-                }
+                egui::Grid::new("profiler_grid")
+                    .num_columns(4)
+                    .spacing([40.0, 4.0])
+                    .striped(true)
+                    .show(ui, |ui| {
+                        ui.label("Metric");
+                        ui.label("Avg (ms)");
+                        ui.label("P99 (ms)");
+                        ui.label("Max (ms)");
+                        ui.end_row();
+                        
+                        for (name, metric) in &self.metrics {
+                            let p99 = Self::compute_p99(&metric.history);
+                            ui.label(name);
+                            ui.label(format!("{:.2}", metric.avg));
+                            ui.label(format!("{:.2}", p99));
+                            ui.label(format!("{:.2}", metric.max));
+                            ui.end_row();
+                        }
+                    });
             });
     }
 }

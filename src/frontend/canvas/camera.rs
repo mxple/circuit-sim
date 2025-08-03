@@ -39,8 +39,8 @@ impl GridCamera {
         Self {
             position: Vec2::ZERO,
             target_position: Vec2::ZERO,
-            zoom: 1.0,
-            target_zoom: 1.0,
+            zoom: 50.0,
+            target_zoom: 50.0,
             lerp_speed: 8.0,
         }
     }
