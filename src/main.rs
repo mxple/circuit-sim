@@ -42,7 +42,7 @@ async fn main() {
 
             draw_grid(&camera);
             ws.draw_preview(&camera);
-            ws.draw_wires(&camera);
+            ws.draw_wires_meshed(&camera);
 
             egui_macroquad::draw();
         }

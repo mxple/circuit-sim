@@ -105,6 +105,7 @@ impl GridCamera {
         vec2(transform.x, transform.y)
     }
 
+    #[allow(unused)]
     pub fn world_to_screen(&self, point: Vec2) -> Vec2 {
         let mat = self.matrix();
         let transform = mat.transform_point3(vec3(point.x, point.y, 0.));
