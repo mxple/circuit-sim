@@ -15,8 +15,9 @@ pub fn generate_wire_meshes() -> Vec<WireMesh> {
     }
     wire_meshes
 }
+
 fn generate_wire_mesh(variant: WireVariant) -> Mesh {
-        let mut vertices = vec![];
+    let mut vertices = vec![];
     let mut indices = vec![];
 
     // draw center square
@@ -44,14 +45,7 @@ fn generate_wire_mesh(variant: WireVariant) -> Mesh {
     }
 }
 
-fn append_rect(
-    vertices: &mut Vec<Vertex>,
-    indices: &mut Vec<u16>,
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-) {
+fn append_rect(vertices: &mut Vec<Vertex>, indices: &mut Vec<u16>, x: f32, y: f32, w: f32, h: f32) {
     let base = vertices.len() as u16;
 
     vertices.push(Vertex::new(x, y, 0.0, 0.0, 0.0, WHITE));
@@ -59,10 +53,7 @@ fn append_rect(
     vertices.push(Vertex::new(x + w, y + h, 0.0, 0.0, 0.0, WHITE));
     vertices.push(Vertex::new(x, y + h, 0.0, 0.0, 0.0, WHITE));
 
-    indices.extend_from_slice(&[
-        base, base + 1, base + 2,
-        base, base + 2, base + 3,
-    ]);
+    indices.extend_from_slice(&[base, base + 1, base + 2, base, base + 2, base + 3]);
 }
 
 pub fn apply_transform(original: &WireMesh, transform: Vec2) -> WireMesh {
@@ -71,7 +62,7 @@ pub fn apply_transform(original: &WireMesh, transform: Vec2) -> WireMesh {
             vertices: original.mesh.vertices.clone(),
             indices: original.mesh.indices.clone(),
             texture: None,
-        }
+        },
     };
 
     for v in ret.mesh.vertices.iter_mut() {

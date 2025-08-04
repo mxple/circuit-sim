@@ -21,6 +21,8 @@ pub struct WireSystem {
     wires: HashMap<(i32, i32), Wire>,
     draw_state: WireDrawState,
     wire_meshes: Vec<WireMesh>,
+    changed: bool,
+    cached_mesh: Mesh,
 }
 
 impl WireSystem {
@@ -29,6 +31,12 @@ impl WireSystem {
             wires: HashMap::new(),
             draw_state: WireDrawState::Idle,
             wire_meshes: generate_wire_meshes(),
+            changed: false,
+            cached_mesh: Mesh {
+                vertices: Vec::new(),
+                indices: Vec::new(),
+                texture: None
+            },
         }
     }
 
@@ -128,6 +136,7 @@ impl WireSystem {
                 // Place new wire
                 let wire = Wire::new(Vec2::new(pos.0 as f32, pos.1 as f32), variant);
                 self.wires.insert(pos, wire);
+                self.changed = true;
             }
         }
     }
@@ -137,6 +146,7 @@ impl WireSystem {
         let variant = WireVariant::new(false, false, false, false, false); // No connections
         let wire = Wire::new(position, variant);
         self.wires.insert(grid_key, wire);
+        self.changed = true;
     }
 
     fn calculate_wire_variant(
@@ -216,6 +226,39 @@ impl WireSystem {
             }
         }
     }
+
+    #[allow(unused)]
+    pub fn draw_wires_cached(&mut self, camera: &GridCamera) {
+        let (view_min, view_max) = camera.get_view_bounds();
+
+        // unsafe { get_internal_gl().quad_gl.update_drawcall_capacity() };
+
+        if self.changed {
+            self.recompute_mesh();
+        }
+        draw_mesh(&self.cached_mesh);
+    }
+
+    fn extend_mesh(parent: &mut Mesh, child: &Mesh) {
+        let vertex_offset = parent.vertices.len() as u16;
+        parent.indices.extend(child.indices.iter().map(|&idx| idx + vertex_offset));
+        parent.vertices.extend_from_slice(&child.vertices);
+    }
+
+    fn recompute_mesh(&mut self) {
+        let mut new_mesh = Mesh {
+            vertices: Vec::new(),
+            indices: Vec::new(),
+            texture: None,
+        };
+        for wire in self.wires.values() {
+            let mesh = &self.wire_meshes[wire.variant.0 as usize];
+            let transformed_mesh = apply_transform(mesh, wire.position).mesh;
+            Self::extend_mesh(&mut new_mesh, &transformed_mesh);
+        }
+        self.cached_mesh = new_mesh;
+    }
+
     pub fn draw_preview(&self, camera: &GridCamera) {
         if let WireDrawState::StartSelected(start_pos) = self.draw_state {
             let size = 0.875;
