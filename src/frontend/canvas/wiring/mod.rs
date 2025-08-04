@@ -2,7 +2,7 @@ use egui_macroquad::macroquad::prelude::*;
 use std::collections::HashMap;
 
 use wire::{Wire, WireVariant};
-use instancing::{create_shader_program, instanced_draw};
+use instancing::{create_shader_program, InstancedWireRenderer};
 
 use super::camera::GridCamera;
 
@@ -18,48 +18,29 @@ enum WireDrawState {
 pub struct WireSystem {
     wires: HashMap<(i32, i32), Wire>,
     draw_state: WireDrawState,
-    // wire_textures: HashMap<u8, RenderTarget>,
-    // wire_textures: [RenderTarget; 0b111111],
-    wire_textures: Vec<RenderTarget>,
-    shader_id: u32,
+    instanced_renderer: InstancedWireRenderer,
 }
 
 impl WireSystem {
     pub fn new() -> Self {
-        let shader_id = unsafe {
-            create_shader_program()
-        };
+
         let mut a = Self {
             wires: HashMap::new(),
             draw_state: WireDrawState::Idle,
-            wire_textures: Vec::new(),
-            shader_id: shader_id,
-            // wire_textures: vec![render_target(16, 16); 0b111111],
+            instanced_renderer: InstancedWireRenderer::new(1e6 as usize),
         };
-        // for i in 0..0b111111 {
-        for i in 0..=0b11111 {
-            let target = render_target(16, 16);
-            // let target = &a.wire_textures[i];
-            target.texture.set_filter(FilterMode::Nearest);
-            set_camera(&Camera2D {
-                zoom: vec2(2., 2.),
-                target: vec2(0.5, 0.5),
-                render_target: Some(target.clone()),
-                ..Default::default()
-            });
 
-            let wire = Wire::new(Vec2::ZERO, WireVariant(i as u8));
-            wire.draw();
-            set_default_camera();
-            if i == 0 {
-                target.texture.get_texture_data().export_png("tex.png");
+        for x in 0..500 {
+            for y in 0..500 {
+                let grid_key = (x as i32, y as i32);
+                let variant = WireVariant(0b1111);
+                let wire = Wire::new(Vec2::new(x as f32, y as f32), variant);
+                a.wires.insert(grid_key, wire);
             }
-            a.wire_textures.push(target);
         }
         for i in 0..16 {
                 let grid_key = (i as i32, 0);
                 let variant = WireVariant(i);
-                // let variant = WireVariant::new(false, false, false, false, false); // No connections
                 let wire = Wire::new(Vec2::new(i as f32, 0 as f32), variant);
                 a.wires.insert(grid_key, wire);
         }
@@ -211,7 +192,7 @@ impl WireSystem {
                 }
             }
         }
-        instanced_draw(self.shader_id, camera, &wire_connections);
+        self.instanced_renderer.instanced_draw(&wire_connections, camera);
     }
 
     pub fn draw_preview(&self, camera: &GridCamera) {
