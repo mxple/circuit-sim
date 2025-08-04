@@ -38,7 +38,7 @@ async fn main() {
             ws.handle_input(&camera);
 
             egui_macroquad::ui(|ctx| {
-                gui.update(ctx);
+                // gui.update(ctx);
                 if enable_camera_debug {
                     camera.draw_egui_ui(ctx);
                 }
