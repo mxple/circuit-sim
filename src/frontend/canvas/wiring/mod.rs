@@ -18,6 +18,7 @@ enum WireDrawState {
 pub struct WireSystem {
     wires: HashMap<(i32, i32), Wire>,
     draw_state: WireDrawState,
+    draw_vertical_first: bool,
     instanced_renderer: InstancedWireRenderer,
 }
 
@@ -26,6 +27,7 @@ impl WireSystem {
         let mut a = Self {
             wires: HashMap::new(),
             draw_state: WireDrawState::Idle,
+            draw_vertical_first: true,
             instanced_renderer: InstancedWireRenderer::new(1e6 as usize),
         };
 
@@ -56,11 +58,12 @@ impl WireSystem {
             if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
                 if let WireDrawState::StartSelected(start_pos) = self.draw_state {
                     self.draw_wire_path(start_pos, end_pos);
-                    self.draw_state = WireDrawState::Idle;
                 }
-            } else {
-                self.draw_state = WireDrawState::StartSelected(end_pos);
             }
+            self.draw_state = WireDrawState::StartSelected(end_pos);
+        }
+        if is_mouse_button_pressed(MouseButton::Right) {
+            self.draw_vertical_first = !self.draw_vertical_first;
         }
 
         if is_key_pressed(KeyCode::Escape) {
@@ -79,18 +82,33 @@ impl WireSystem {
 
         // Create L-shaped path: start -> corner -> end
         // Path goes: start -> (start.x, end.y) -> end
-        let corner = Vec2::new(start.x, end.y);
+        let corner = if self.draw_vertical_first {
+            Vec2::new(start.x, end.y)
+        } else {
+            Vec2::new(end.x, start.y)
+        };
         let corner_i = (corner.x as i32, corner.y as i32);
 
         let mut path_positions = Vec::new();
 
         // Vertical segment: start to corner
-        if start.y != corner.y {
-            let y_step = if corner.y > start.y { 1 } else { -1 };
-            let mut current_y = start.y as i32;
-            while current_y != corner.y as i32 {
-                path_positions.push((start.x as i32, current_y));
-                current_y += y_step;
+        if self.draw_vertical_first {
+            if start.y != corner.y {
+                let y_step = if corner.y > start.y { 1 } else { -1 };
+                let mut current_y = start.y as i32;
+                while current_y != corner.y as i32 {
+                    path_positions.push((start.x as i32, current_y));
+                    current_y += y_step;
+                }
+            }
+        } else {
+            if start.x != corner.x {
+                let x_step = if corner.x > start.x { 1 } else { -1 };
+                let mut current_x = start.x as i32;
+                while current_x != corner.x as i32 {
+                    path_positions.push((current_x, start.y as i32));
+                    current_x += x_step;
+                }
             }
         }
 
@@ -100,16 +118,31 @@ impl WireSystem {
         }
 
         // Horizontal segment: corner to end
-        if corner.x != end.x {
-            let x_step = if end.x > corner.x { 1 } else { -1 };
-            let mut current_x = corner.x as i32;
-            if corner != start {
-                // Don't double-add corner
-                current_x += x_step;
+        if self.draw_vertical_first {
+            if corner.x != end.x {
+                let x_step = if end.x > corner.x { 1 } else { -1 };
+                let mut current_x = corner.x as i32;
+                if corner != start {
+                    // Don't double-add corner
+                    current_x += x_step;
+                }
+                while current_x != end.x as i32 + x_step {
+                    path_positions.push((current_x, end.y as i32));
+                    current_x += x_step;
+                }
             }
-            while current_x != end.x as i32 + x_step {
-                path_positions.push((current_x, end.y as i32));
-                current_x += x_step;
+        } else {
+            if corner.y != end.y {
+                let y_step = if end.y > corner.y { 1 } else { -1 };
+                let mut current_y = corner.y as i32;
+                if corner != start {
+                    // Don't double-add corner
+                    current_y += y_step;
+                }
+                while current_y != end.y as i32 + y_step {
+                    path_positions.push((end.x as i32, current_y));
+                    current_y += y_step;
+                }
             }
         }
 
@@ -259,9 +292,25 @@ impl WireSystem {
         }
 
         let width = camera.get_pixel_thickness();
-        let corner = Vec2::new(start.x, end.y);
+        let corner = if self.draw_vertical_first {
+            Vec2::new(start.x, end.y)
+        } else {
+            Vec2::new(end.x, start.y)
+        };
 
-        if start.y != corner.y {
+        let draw_first = if self.draw_vertical_first {
+            start.y != corner.y
+        } else {
+            start.x != corner.x
+        };
+
+        let draw_second = if self.draw_vertical_first {
+            corner.x != end.x
+        } else {
+            corner.y != end.y
+        };
+
+        if draw_first {
             let line_start = start + vec2(0.5, 0.5);
             let line_end = corner + vec2(0.5, 0.5);
             draw_line(
@@ -274,7 +323,7 @@ impl WireSystem {
             );
         }
 
-        if corner.x != end.x {
+        if draw_second {
             let line_start = corner + vec2(0.5, 0.5);
             let line_end = end + vec2(0.5, 0.5);
             draw_line(
