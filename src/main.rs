@@ -55,10 +55,9 @@ async fn main() {
             set_camera(&camera);
             draw_grid(&camera);
             ws.draw_preview(&camera);
-            egui_macroquad::draw();
 
             ws.draw_wires(&camera);
-
+            egui_macroquad::draw();
         }
 
         next_frame().await;
