@@ -29,7 +29,7 @@ impl App {
     }
 
     pub fn get_selected_component(&mut self) -> Option<CircuitComponentType> {
-        self.selected_component.clone()
+        self.selected_component
     }
 
     pub fn set_selected_component(&mut self, component: Option<CircuitComponentType>) {

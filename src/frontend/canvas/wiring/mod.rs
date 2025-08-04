@@ -31,7 +31,7 @@ impl WireSystem {
 
         for x in 0..500 {
             for y in 0..500 {
-                let grid_key = (x as i32, y as i32);
+                let grid_key = (x, y);
                 let variant = WireVariant(0b1111);
                 let wire = Wire::new(Vec2::new(x as f32, y as f32), variant);
                 a.wires.insert(grid_key, wire);

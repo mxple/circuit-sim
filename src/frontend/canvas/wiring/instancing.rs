@@ -128,7 +128,7 @@ impl InstancedWireRenderer {
             );
 
             // Update instance data - FIXED glBufferSubData call
-            let size: i32 = (wire_connections.len() * std::mem::size_of::<(Vec2, f32)>()) as _;
+            let size: i32 = std::mem::size_of_val(wire_connections) as _;
             glBindBuffer(GL_ARRAY_BUFFER, self.instance_vbo);
             glBufferSubData(
                 GL_ARRAY_BUFFER,

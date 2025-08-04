@@ -41,13 +41,13 @@ impl Profiler {
         let metric = self
             .metrics
             .entry(name.to_string())
-            .or_insert_with(Metric::default);
+            .or_default();
         metric.last_start = Some(Instant::now());
     }
 
     pub fn end(&mut self, name: &str) {
-        if let Some(metric) = self.metrics.get_mut(name) {
-            if let Some(start) = metric.last_start.take() {
+        if let Some(metric) = self.metrics.get_mut(name)
+            && let Some(start) = metric.last_start.take() {
                 let ms = start.elapsed().as_secs_f32() * 1000.0;
 
                 metric.avg = self.alpha * ms + (1.0 - self.alpha) * metric.avg;
@@ -58,7 +58,6 @@ impl Profiler {
                 }
                 metric.history.push(ms);
             }
-        }
     }
 
     fn compute_p99(samples: &[f32]) -> f32 {
