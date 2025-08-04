@@ -17,6 +17,7 @@ pub struct ProfileScope {
     name: String,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl ProfileScope {
     pub fn new(name: &str) -> Self {
         profile_start(name);
@@ -24,10 +25,23 @@ impl ProfileScope {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Drop for ProfileScope {
     fn drop(&mut self) {
         profile_end(&self.name);
     }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl ProfileScope {
+    pub fn new(_name: &str) -> Self {
+        Self { name: String::new() }
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl Drop for ProfileScope {
+    fn drop(&mut self) {}
 }
 
 #[macro_export]
