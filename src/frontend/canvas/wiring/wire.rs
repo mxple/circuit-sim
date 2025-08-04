@@ -1,6 +1,6 @@
 use egui_macroquad::macroquad::prelude::*;
 
-pub struct WireVariant(u8);
+pub struct WireVariant(pub u8);
 
 // 4 bits to determine whether connections exist for N, E, S, W
 // 1 bit to determine if a wire with all 4 connections is a junction or overpass
@@ -93,8 +93,9 @@ impl Wire {
         Self { position, variant }
     }
 
-    pub fn draw(&self, camera: &GridCamera) {
+    pub fn draw(&self) {
         let width: f32 = 0.2;
+        // let width: f32 = 1.0;
         let pos = self.position;
         let scale = 1.0;
     

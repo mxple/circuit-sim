@@ -52,14 +52,13 @@ async fn main() {
             profile_scope!("draw");
 
             clear_background(Color::new(0.1, 0.1, 0.1, 1.0));
-
             set_camera(&camera);
-
             draw_grid(&camera);
             ws.draw_preview(&camera);
+            egui_macroquad::draw();
+
             ws.draw_wires(&camera);
 
-            egui_macroquad::draw();
         }
 
         next_frame().await;

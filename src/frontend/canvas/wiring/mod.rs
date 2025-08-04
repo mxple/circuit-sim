@@ -2,10 +2,12 @@ use egui_macroquad::macroquad::prelude::*;
 use std::collections::HashMap;
 
 use wire::{Wire, WireVariant};
+use instancing::{create_shader_program, InstancedWireRenderer};
 
 use super::camera::GridCamera;
 
 mod wire;
+mod instancing;
 
 #[derive(Debug, Clone, Copy)]
 enum WireDrawState {
@@ -16,14 +18,33 @@ enum WireDrawState {
 pub struct WireSystem {
     wires: HashMap<(i32, i32), Wire>,
     draw_state: WireDrawState,
+    instanced_renderer: InstancedWireRenderer,
 }
 
 impl WireSystem {
     pub fn new() -> Self {
-        Self {
+
+        let mut a = Self {
             wires: HashMap::new(),
             draw_state: WireDrawState::Idle,
+            instanced_renderer: InstancedWireRenderer::new(1e6 as usize),
+        };
+
+        for x in 0..500 {
+            for y in 0..500 {
+                let grid_key = (x as i32, y as i32);
+                let variant = WireVariant(0b1111);
+                let wire = Wire::new(Vec2::new(x as f32, y as f32), variant);
+                a.wires.insert(grid_key, wire);
+            }
         }
+        for i in 0..16 {
+                let grid_key = (i as i32, 0);
+                let variant = WireVariant(i);
+                let wire = Wire::new(Vec2::new(i as f32, 0 as f32), variant);
+                a.wires.insert(grid_key, wire);
+        }
+        a
     }
 
     pub fn handle_input(&mut self, camera: &GridCamera) {
@@ -151,13 +172,27 @@ impl WireSystem {
 
     pub fn draw_wires(&self, camera: &GridCamera) {
         let (view_min, view_max) = camera.get_view_bounds();
+
+        let mut wire_connections = Vec::<(Vec2, f32)>::new();
         
         for wire in self.wires.values() {
             if wire.position.x >= view_min.x - 1.0 && wire.position.x <= view_max.x + 1.0 &&
                wire.position.y >= view_min.y - 1.0 && wire.position.y <= view_max.y + 1.0 {
-                wire.draw(camera);
+                if wire.variant.has_east() {
+                    wire_connections.push((wire.position, 0.));
+                }
+                if wire.variant.has_north() {
+                    wire_connections.push((wire.position, 1.));
+                }
+                if wire.variant.has_west() {
+                    wire_connections.push((wire.position, 2.));
+                }
+                if wire.variant.has_south() {
+                    wire_connections.push((wire.position, 3.));
+                }
             }
         }
+        self.instanced_renderer.instanced_draw(&wire_connections, camera);
     }
 
     pub fn draw_preview(&self, camera: &GridCamera) {
