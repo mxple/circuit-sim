@@ -65,8 +65,6 @@ impl WireVariant {
 }
 use std::fmt;
 
-use crate::frontend::canvas::camera::GridCamera;
-
 impl fmt::Display for WireVariant {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let n = if self.has_north() { 'N' } else { '-' };
@@ -98,37 +96,25 @@ impl Wire {
         // let width: f32 = 1.0;
         let pos = self.position;
         let scale = 1.0;
-    
+
         let center = (scale - width * scale) / 2.0;
         let size = width * scale;
         let color = GREEN;
-    
+
         let is_overpass = self.variant.is_overpass();
         let gap = if is_overpass { size * 0.75 } else { 0.0 };
-    
-        draw_rectangle(
-            pos.x + center,
-            pos.y + center,
-            size,
-            size,
-            color,
-        );
-    
+
+        draw_rectangle(pos.x + center, pos.y + center, size, size, color);
+
         if self.variant.has_north() {
             let height = if is_overpass {
                 center + size / 2.0 - gap
             } else {
                 center + size / 2.0
             };
-            draw_rectangle(
-                pos.x + center,
-                pos.y,
-                size,
-                height,
-                color,
-            );
+            draw_rectangle(pos.x + center, pos.y, size, height, color);
         }
-    
+
         if self.variant.has_south() {
             let y_start = if is_overpass {
                 pos.y + center + size / 2.0 + gap
@@ -140,15 +126,9 @@ impl Wire {
             } else {
                 center + size / 2.0
             };
-            draw_rectangle(
-                pos.x + center,
-                y_start,
-                size,
-                height,
-                color,
-            );
+            draw_rectangle(pos.x + center, y_start, size, height, color);
         }
-    
+
         if self.variant.has_east() {
             draw_rectangle(
                 pos.x + center + size / 2.0,
@@ -158,15 +138,9 @@ impl Wire {
                 color,
             );
         }
-    
+
         if self.variant.has_west() {
-            draw_rectangle(
-                pos.x,
-                pos.y + center,
-                center + size / 2.0,
-                size,
-                color,
-            );
+            draw_rectangle(pos.x, pos.y + center, center + size / 2.0, size, color);
         }
     }
 }

@@ -21,7 +21,9 @@ pub struct ProfileScope {
 impl ProfileScope {
     pub fn new(name: &str) -> Self {
         profile_start(name);
-        Self { name: name.to_string() }
+        Self {
+            name: name.to_string(),
+        }
     }
 }
 
@@ -35,7 +37,9 @@ impl Drop for ProfileScope {
 #[cfg(target_arch = "wasm32")]
 impl ProfileScope {
     pub fn new(_name: &str) -> Self {
-        Self { name: String::new() }
+        Self {
+            name: String::new(),
+        }
     }
 }
 

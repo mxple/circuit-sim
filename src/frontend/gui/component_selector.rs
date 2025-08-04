@@ -1,12 +1,9 @@
-use egui_macroquad::egui::{Color32, Stroke, Sense, Response, Ui};
-use epaint::{Pos2, CubicBezierShape};
-use crate::frontend::gui::component_utils::{
-    CircuitComponentType,
-    DrawInstruction,
-    pos2_with_rect,
-};
 use crate::App;
-
+use crate::frontend::gui::component_utils::{
+    CircuitComponentType, DrawInstruction, pos2_with_rect,
+};
+use egui_macroquad::egui::{Color32, Response, Sense, Stroke, Ui};
+use epaint::{CubicBezierShape, Pos2};
 
 impl App {
     pub fn circuit_component_button(
@@ -27,10 +24,7 @@ impl App {
                 match instruction {
                     DrawInstruction::Line([a, b]) => {
                         painter.line_segment(
-                            [
-                                pos2_with_rect(a, inner_rect),
-                                pos2_with_rect(b, inner_rect),
-                            ],
+                            [pos2_with_rect(a, inner_rect), pos2_with_rect(b, inner_rect)],
                             Stroke::new(2.0, Color32::WHITE),
                         );
                     }
@@ -65,7 +59,9 @@ impl App {
             if response.drag_stopped() {
                 self.dragged_component = Some(component_type);
             }
-            if let Some(component) = self.get_selected_component() && component == component_type {
+            if let Some(component) = self.get_selected_component()
+                && component == component_type
+            {
                 painter.rect_filled(rect, 4.0, Color32::from_white_alpha(20));
             } else if response.hovered() {
                 painter.rect_filled(rect, 4.0, Color32::from_white_alpha(5));

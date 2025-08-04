@@ -4,9 +4,9 @@ use super::camera::GridCamera;
 
 pub fn draw_grid(camera: &GridCamera) {
     let (view_min, view_max) = camera.get_view_bounds();
-    
+
     let grid_spacing = 1.0; // Adjust this for your desired grid spacing
-    
+
     // Calculate grid lines that are visible
     let grid_start_x = (view_min.x / grid_spacing).floor() * grid_spacing;
     let grid_end_x = (view_max.x / grid_spacing).ceil() * grid_spacing;
@@ -31,4 +31,3 @@ pub fn draw_grid(camera: &GridCamera) {
         y += grid_spacing;
     }
 }
-

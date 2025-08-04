@@ -1,10 +1,9 @@
-use egui_macroquad::egui::{menu, Frame, Color32, Stroke, StrokeKind, Sense, Response, Ui, TopBottomPanel, Vec2, Key};
-use epaint::CubicBezierShape;
 use crate::App;
-use crate::frontend::gui::component_utils::{
-    DrawInstruction,
-    pos2_with_rect,
+use crate::frontend::gui::component_utils::{DrawInstruction, pos2_with_rect};
+use egui_macroquad::egui::{
+    Color32, Key, Response, Sense, Stroke, StrokeKind, TopBottomPanel, Ui, Vec2, menu,
 };
+use epaint::CubicBezierShape;
 
 impl App {
     fn handle_hotbar_keys(&mut self, ctx: &egui::Context) {
@@ -27,12 +26,7 @@ impl App {
         });
     }
 
-    fn hotbar_button(
-        &mut self,
-        size: egui::Vec2,
-        ui: &mut Ui,
-        index: usize,
-    ) -> Response {
+    fn hotbar_button(&mut self, size: egui::Vec2, ui: &mut Ui, index: usize) -> Response {
         let (rect, response) = ui.allocate_exact_size(size, Sense::all());
 
         if ui.is_rect_visible(rect) {
@@ -41,16 +35,13 @@ impl App {
             let inner_rect = padded_rect.shrink(5.0);
 
             let button_contents = self.hotbar_selections[index];
-            
+
             if let Some(selected_component) = button_contents {
                 for instruction in selected_component.get_draw_instructions() {
                     match instruction {
                         DrawInstruction::Line([a, b]) => {
                             painter.line_segment(
-                                [
-                                    pos2_with_rect(a, inner_rect),
-                                    pos2_with_rect(b, inner_rect),
-                                ],
+                                [pos2_with_rect(a, inner_rect), pos2_with_rect(b, inner_rect)],
                                 Stroke::new(2.0, Color32::WHITE),
                             );
                         }
@@ -75,7 +66,9 @@ impl App {
             if response.clicked() {
                 self.set_selected_component(button_contents);
             }
-            if let Some(component) = self.get_selected_component() && self.get_selected_component() == button_contents {
+            if let Some(component) = self.get_selected_component()
+                && self.get_selected_component() == button_contents
+            {
                 painter.rect_filled(padded_rect, 4.0, Color32::from_white_alpha(20));
             } else if response.contains_pointer() {
                 painter.rect_filled(padded_rect, 4.0, Color32::from_white_alpha(5));
@@ -107,18 +100,13 @@ impl App {
     }
 
     pub fn render_toolbar(&mut self, ctx: &egui::Context) {
-        TopBottomPanel::top("toolbar")
-            .show(ctx, |ui| {
-                menu::bar(ui, |ui| {
-                    for i in 0..Self::NUM_HOTBAR_BUTTONS {
-                        self.hotbar_button(
-                            Vec2::splat(40.0),
-                            ui,
-                            i,
-                        );
-                    }
-                });
+        TopBottomPanel::top("toolbar").show(ctx, |ui| {
+            menu::bar(ui, |ui| {
+                for i in 0..Self::NUM_HOTBAR_BUTTONS {
+                    self.hotbar_button(Vec2::splat(40.0), ui, i);
+                }
             });
+        });
         self.handle_hotbar_keys(ctx);
     }
 }

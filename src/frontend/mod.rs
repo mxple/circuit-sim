@@ -1,2 +1,2 @@
-pub mod gui;
 pub mod canvas;
+pub mod gui;

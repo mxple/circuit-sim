@@ -1,9 +1,9 @@
+use component_utils::CircuitComponentType;
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
-use component_utils::CircuitComponentType;
 
-mod component_utils;
 mod component_selector;
+mod component_utils;
 mod toolbar;
 
 pub struct App {
@@ -16,9 +16,8 @@ pub struct App {
 
 impl App {
     pub const NUM_HOTBAR_BUTTONS: usize = 5;
-    pub const HOTBAR_BUTTON_LABELS: [&'static str; Self::NUM_HOTBAR_BUTTONS] = [
-        "1", "2", "3", "4", "5",
-    ];
+    pub const HOTBAR_BUTTON_LABELS: [&'static str; Self::NUM_HOTBAR_BUTTONS] =
+        ["1", "2", "3", "4", "5"];
     pub fn new() -> Self {
         Self {
             expanded: true,
@@ -54,7 +53,11 @@ impl App {
 
         // show build (wasm or native) at bottom left
         TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
-            let build = if cfg!(target_arch = "wasm32") { "WASM" } else { "Native" };
+            let build = if cfg!(target_arch = "wasm32") {
+                "WASM"
+            } else {
+                "Native"
+            };
             let version = env!("CARGO_PKG_VERSION");
             ui.horizontal(|ui| {
                 ui.label(format!("Build: {}", build));
@@ -88,7 +91,6 @@ impl App {
                 });
             });
 
-
         SidePanel::left("toggle_button_panel")
             .frame(Frame::NONE)
             .exact_width(10.0)
@@ -117,11 +119,13 @@ impl App {
         SidePanel::right("Right").show(ctx, |ui| {
             ui.label("test1");
         });
-        
+
         self.render_toolbar(ctx);
 
         // Ensure that each component can only be in one hotbar slot at a time
-        if let Some(hovered_index) = self.hovered_hotbar_button && self.dragged_component.is_some() {
+        if let Some(hovered_index) = self.hovered_hotbar_button
+            && self.dragged_component.is_some()
+        {
             for i in 0..Self::NUM_HOTBAR_BUTTONS {
                 if self.hotbar_selections[i] == self.dragged_component {
                     self.hotbar_selections[i] = self.hotbar_selections[hovered_index];

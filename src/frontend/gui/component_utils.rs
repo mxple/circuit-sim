@@ -43,12 +43,15 @@ impl CircuitComponentType {
         [
             DrawInstruction::Line([Pos2::new(0.0, OFFSET_Y), Pos2::new(0.0, 1.0 - OFFSET_Y)]),
             DrawInstruction::Line([Pos2::new(0.0, OFFSET_Y), Pos2::new(0.5, OFFSET_Y)]),
-            DrawInstruction::Line([Pos2::new(0.0, 1.0 - OFFSET_Y), Pos2::new(BOX_WIDTH, 1.0 - OFFSET_Y)]),
+            DrawInstruction::Line([
+                Pos2::new(0.0, 1.0 - OFFSET_Y),
+                Pos2::new(BOX_WIDTH, 1.0 - OFFSET_Y),
+            ]),
             DrawInstruction::CubicBezierCurve([
                 Pos2::new(BOX_WIDTH, 1.0 - OFFSET_Y),
                 Pos2::new(1.0, 1.0 - OFFSET_Y),
                 Pos2::new(1.0, OFFSET_Y),
-                Pos2::new(BOX_WIDTH, OFFSET_Y)
+                Pos2::new(BOX_WIDTH, OFFSET_Y),
             ]),
         ]
     };
@@ -78,7 +81,6 @@ impl CircuitComponentType {
         ]
     };
 
-    
     pub fn get_draw_instructions(&self) -> &'static [DrawInstruction] {
         match self {
             Self::AndGate => &Self::AND_GATE_DRAW_INSTRUCTIONS,

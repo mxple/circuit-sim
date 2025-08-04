@@ -23,7 +23,7 @@ async fn main() {
     let mut camera = GridCamera::new();
     let mut gui = App::new();
     let mut ws = WireSystem::new();
-    
+
     request_new_screen_size(1280.0, 720.0);
     next_frame().await;
 

@@ -1,8 +1,8 @@
 use macroquad::prelude::*;
 use std::{
     collections::HashMap,
-    time::Instant,
     sync::{Arc, Mutex, OnceLock},
+    time::Instant,
 };
 
 const HISTORY_SIZE: usize = 256;
@@ -25,9 +25,9 @@ static PROFILER: OnceLock<Arc<Mutex<Profiler>>> = OnceLock::new();
 
 impl Profiler {
     pub fn global() -> Arc<Mutex<Profiler>> {
-        PROFILER.get_or_init(|| {
-            Arc::new(Mutex::new(Profiler::new(0.1)))
-        }).clone()
+        PROFILER
+            .get_or_init(|| Arc::new(Mutex::new(Profiler::new(0.1))))
+            .clone()
     }
 
     pub fn new(alpha: f32) -> Self {
@@ -36,9 +36,10 @@ impl Profiler {
             alpha,
         }
     }
-    
+
     pub fn start(&mut self, name: &str) {
-        let metric = self.metrics
+        let metric = self
+            .metrics
             .entry(name.to_string())
             .or_insert_with(Metric::default);
         metric.last_start = Some(Instant::now());
@@ -85,7 +86,7 @@ impl Profiler {
                         ui.label("P99 (ms)");
                         ui.label("Max (ms)");
                         ui.end_row();
-                        
+
                         for (name, metric) in &self.metrics {
                             let p99 = Self::compute_p99(&metric.history);
                             ui.label(name);

@@ -1,10 +1,6 @@
-use miniquad::{
-    graphics::raw_gl::*,
-};
-use crate::{
-    glam::{Vec2}, profile_scope, GridCamera
-};
+use crate::{GridCamera, glam::Vec2};
 use macroquad::prelude::*;
+use miniquad::graphics::raw_gl::*;
 use std::ffi::CStr;
 
 const VERTEX_SRC: &str = include_str!("shaders/instancing.vert");
@@ -24,14 +20,14 @@ impl InstancedWireRenderer {
             let mut vao = 0;
             let mut vertex_vbo = 0;
             let mut instance_vbo = 0;
-            
+
             glGenVertexArrays(1, &mut vao);
             glGenBuffers(1, &mut vertex_vbo);
             glGenBuffers(1, &mut instance_vbo);
-            
+
             // Bind VAO first
             glBindVertexArray(vao);
-            
+
             // Setup vertex buffer
             glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
             glBufferData(
@@ -40,11 +36,18 @@ impl InstancedWireRenderer {
                 WIRE_VERTICES.as_ptr() as *const _,
                 GL_STATIC_DRAW,
             );
-            
+
             // Vertex positions (location 0) - FIXED stride
             glEnableVertexAttribArray(0);
-            glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE.try_into().unwrap(), 0, std::ptr::null());
-            
+            glVertexAttribPointer(
+                0,
+                2,
+                GL_FLOAT,
+                GL_FALSE.try_into().unwrap(),
+                0,
+                std::ptr::null(),
+            );
+
             // Setup instance buffer with pre-allocated space
             glBindBuffer(GL_ARRAY_BUFFER, instance_vbo);
             glBufferData(
@@ -53,62 +56,91 @@ impl InstancedWireRenderer {
                 std::ptr::null(),
                 GL_DYNAMIC_DRAW, // Since we'll update this frequently
             );
-            
+
             // Instance data setup
             let stride = std::mem::size_of::<(Vec2, f32)>() as i32;
-            
+
             // Instance offset (Vec2) - location 1
             glEnableVertexAttribArray(1);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE.try_into().unwrap(), stride, std::ptr::null());
+            glVertexAttribPointer(
+                1,
+                2,
+                GL_FLOAT,
+                GL_FALSE.try_into().unwrap(),
+                stride,
+                std::ptr::null(),
+            );
             glVertexAttribDivisor(1, 1);
-            
+
             // Instance rotation (f32) - location 2
             glEnableVertexAttribArray(2);
-            glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE.try_into().unwrap(), stride, std::mem::size_of::<Vec2>() as *const _);
+            glVertexAttribPointer(
+                2,
+                1,
+                GL_FLOAT,
+                GL_FALSE.try_into().unwrap(),
+                stride,
+                std::mem::size_of::<Vec2>() as *const _,
+            );
             glVertexAttribDivisor(2, 1);
-            
+
             let shader_id = create_shader_program();
-            
+
             // Unbind everything
             glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
-            
-            Self { vao, vertex_vbo, instance_vbo, shader_id, max_instances }
+
+            Self {
+                vao,
+                vertex_vbo,
+                instance_vbo,
+                shader_id,
+                max_instances,
+            }
         }
     }
-    
-    pub fn instanced_draw(
-        &self,
-        wire_connections: &[(Vec2, f32)],
-        camera: &GridCamera,
-    ) {
+
+    pub fn instanced_draw(&self, wire_connections: &[(Vec2, f32)], camera: &GridCamera) {
         if wire_connections.is_empty() {
             return;
         }
-        
+
         if wire_connections.len() > self.max_instances {
-            eprintln!("Warning: trying to draw {} instances but max is {}", 
-                     wire_connections.len(), self.max_instances);
+            eprintln!(
+                "Warning: trying to draw {} instances but max is {}",
+                wire_connections.len(),
+                self.max_instances
+            );
             return;
         }
-        
+
         unsafe {
             glUseProgram(self.shader_id);
-            
+
             // Update projection matrix
             let projection = camera.matrix();
             let loc = glGetUniformLocation(self.shader_id, b"projection\0".as_ptr() as *const _);
-            glUniformMatrix4fv(loc, 1, GL_FALSE.try_into().unwrap(), projection.to_cols_array().as_ptr());
-            
+            glUniformMatrix4fv(
+                loc,
+                1,
+                GL_FALSE.try_into().unwrap(),
+                projection.to_cols_array().as_ptr(),
+            );
+
             // Update instance data - FIXED glBufferSubData call
             let size: i32 = (wire_connections.len() * std::mem::size_of::<(Vec2, f32)>()) as _;
             glBindBuffer(GL_ARRAY_BUFFER, self.instance_vbo);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, size as _, wire_connections.as_ptr() as *const _);
-            
+            glBufferSubData(
+                GL_ARRAY_BUFFER,
+                0,
+                size as _,
+                wire_connections.as_ptr() as *const _,
+            );
+
             // Draw
             glBindVertexArray(self.vao);
             glDrawArraysInstanced(GL_TRIANGLES, 0, 6, wire_connections.len() as _);
-            
+
             // Clean up
             glBindVertexArray(0);
             glUseProgram(0);
@@ -177,21 +209,20 @@ pub fn create_shader_program() -> u32 {
                 .into_owned();
             panic!("Shader linking failed:\n{}", message);
         }
-        
+
         // Clean up shaders
         glDeleteShader(vertex_shader);
         glDeleteShader(fragment_shader);
-        
+
         program
     }
 }
 
 const WIRE_VERTICES: [f32; 12] = [
-    0.5,    0.4,   // bl
-    1.0,    0.4,   // br
-    1.0,    0.6,   // tr
-    
-    0.5,    0.4,   // bl
-    1.0,    0.6,   // tr
-    0.5,    0.6,   // tl
+    0.5, 0.4, // bl
+    1.0, 0.4, // br
+    1.0, 0.6, // tr
+    0.5, 0.4, // bl
+    1.0, 0.6, // tr
+    0.5, 0.6, // tl
 ];

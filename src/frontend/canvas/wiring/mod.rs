@@ -1,13 +1,13 @@
 use egui_macroquad::macroquad::prelude::*;
 use std::collections::HashMap;
 
+use instancing::InstancedWireRenderer;
 use wire::{Wire, WireVariant};
-use instancing::{create_shader_program, InstancedWireRenderer};
 
 use super::camera::GridCamera;
 
-mod wire;
 mod instancing;
+mod wire;
 
 #[derive(Debug, Clone, Copy)]
 enum WireDrawState {
@@ -23,7 +23,6 @@ pub struct WireSystem {
 
 impl WireSystem {
     pub fn new() -> Self {
-
         let mut a = Self {
             wires: HashMap::new(),
             draw_state: WireDrawState::Idle,
@@ -39,10 +38,10 @@ impl WireSystem {
             }
         }
         for i in 0..16 {
-                let grid_key = (i as i32, 0);
-                let variant = WireVariant(i);
-                let wire = Wire::new(Vec2::new(i as f32, 0 as f32), variant);
-                a.wires.insert(grid_key, wire);
+            let grid_key = (i as i32, 0);
+            let variant = WireVariant(i);
+            let wire = Wire::new(Vec2::new(i as f32, 0 as f32), variant);
+            a.wires.insert(grid_key, wire);
         }
         a
     }
@@ -104,7 +103,8 @@ impl WireSystem {
         if corner.x != end.x {
             let x_step = if end.x > corner.x { 1 } else { -1 };
             let mut current_x = corner.x as i32;
-            if corner != start { // Don't double-add corner
+            if corner != start {
+                // Don't double-add corner
                 current_x += x_step;
             }
             while current_x != end.x as i32 + x_step {
@@ -123,8 +123,16 @@ impl WireSystem {
 
         // Place wires with correct connections
         for (i, &pos) in path_positions.iter().enumerate() {
-            let prev_pos = if i > 0 { Some(path_positions[i - 1]) } else { None };
-            let next_pos = if i < path_positions.len() - 1 { Some(path_positions[i + 1]) } else { None };
+            let prev_pos = if i > 0 {
+                Some(path_positions[i - 1])
+            } else {
+                None
+            };
+            let next_pos = if i < path_positions.len() - 1 {
+                Some(path_positions[i + 1])
+            } else {
+                None
+            };
 
             let variant = self.calculate_wire_variant(pos, prev_pos, next_pos);
             if let Some(existing_wire) = self.wires.get_mut(&pos) {
@@ -145,7 +153,12 @@ impl WireSystem {
         self.wires.insert(grid_key, wire);
     }
 
-    fn calculate_wire_variant(&self, current: (i32, i32), prev: Option<(i32, i32)>, next: Option<(i32, i32)>) -> WireVariant {
+    fn calculate_wire_variant(
+        &self,
+        current: (i32, i32),
+        prev: Option<(i32, i32)>,
+        next: Option<(i32, i32)>,
+    ) -> WireVariant {
         let mut north = false;
         let mut east = false;
         let mut south = false;
@@ -153,18 +166,34 @@ impl WireSystem {
 
         // Check connections to previous position
         if let Some(prev_pos) = prev {
-            if prev_pos.1 < current.1 { north = true; }
-            if prev_pos.0 > current.0 { east = true; }
-            if prev_pos.1 > current.1 { south = true; }
-            if prev_pos.0 < current.0 { west = true; }
+            if prev_pos.1 < current.1 {
+                north = true;
+            }
+            if prev_pos.0 > current.0 {
+                east = true;
+            }
+            if prev_pos.1 > current.1 {
+                south = true;
+            }
+            if prev_pos.0 < current.0 {
+                west = true;
+            }
         }
 
         // Check connections to next position
         if let Some(next_pos) = next {
-            if next_pos.1 < current.1 { north = true; }
-            if next_pos.0 > current.0 { east = true; }
-            if next_pos.1 > current.1 { south = true; }
-            if next_pos.0 < current.0 { west = true; }
+            if next_pos.1 < current.1 {
+                north = true;
+            }
+            if next_pos.0 > current.0 {
+                east = true;
+            }
+            if next_pos.1 > current.1 {
+                south = true;
+            }
+            if next_pos.0 < current.0 {
+                west = true;
+            }
         }
 
         WireVariant::new(north, east, south, west, false)
@@ -174,10 +203,13 @@ impl WireSystem {
         let (view_min, view_max) = camera.get_view_bounds();
 
         let mut wire_connections = Vec::<(Vec2, f32)>::new();
-        
+
         for wire in self.wires.values() {
-            if wire.position.x >= view_min.x - 1.0 && wire.position.x <= view_max.x + 1.0 &&
-               wire.position.y >= view_min.y - 1.0 && wire.position.y <= view_max.y + 1.0 {
+            if wire.position.x >= view_min.x - 1.0
+                && wire.position.x <= view_max.x + 1.0
+                && wire.position.y >= view_min.y - 1.0
+                && wire.position.y <= view_max.y + 1.0
+            {
                 if wire.variant.has_east() {
                     wire_connections.push((wire.position, 0.));
                 }
@@ -192,7 +224,8 @@ impl WireSystem {
                 }
             }
         }
-        self.instanced_renderer.instanced_draw(&wire_connections, camera);
+        self.instanced_renderer
+            .instanced_draw(&wire_connections, camera);
     }
 
     pub fn draw_preview(&self, camera: &GridCamera) {
@@ -200,14 +233,21 @@ impl WireSystem {
             let size = 0.875;
             let rect_x = start_pos.x + (1.0 - size) / 2.0;
             let rect_y = start_pos.y + (1.0 - size) / 2.0;
-    
-            draw_rectangle_lines(rect_x, rect_y, size, size, camera.get_pixel_thickness() * 2.0, GREEN);
-    
+
+            draw_rectangle_lines(
+                rect_x,
+                rect_y,
+                size,
+                size,
+                camera.get_pixel_thickness() * 2.0,
+                GREEN,
+            );
+
             if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
                 let mouse_screen = Vec2::new(mouse_position().0, mouse_position().1);
                 let mouse_world = camera.screen_to_world(mouse_screen);
                 let end_pos = Vec2::new(mouse_world.x.floor(), mouse_world.y.floor());
-    
+
                 self.draw_preview_path(start_pos, end_pos, camera);
             }
         }
@@ -217,22 +257,36 @@ impl WireSystem {
         if start == end {
             return;
         }
-    
+
         let width = camera.get_pixel_thickness();
         let corner = Vec2::new(start.x, end.y);
-    
+
         if start.y != corner.y {
             let line_start = start + vec2(0.5, 0.5);
             let line_end = corner + vec2(0.5, 0.5);
-            draw_line(line_start.x, line_start.y, line_end.x, line_end.y, width, Color::new(0.0, 1.0, 0.0, 0.6));
+            draw_line(
+                line_start.x,
+                line_start.y,
+                line_end.x,
+                line_end.y,
+                width,
+                Color::new(0.0, 1.0, 0.0, 0.6),
+            );
         }
-    
+
         if corner.x != end.x {
             let line_start = corner + vec2(0.5, 0.5);
             let line_end = end + vec2(0.5, 0.5);
-            draw_line(line_start.x, line_start.y, line_end.x, line_end.y, width, Color::new(0.0, 1.0, 0.0, 0.6));
+            draw_line(
+                line_start.x,
+                line_start.y,
+                line_end.x,
+                line_end.y,
+                width,
+                Color::new(0.0, 1.0, 0.0, 0.6),
+            );
         }
-    
+
         let size = 0.9;
         let end_center = end + vec2(0.5, 0.5);
         draw_rectangle_lines(
