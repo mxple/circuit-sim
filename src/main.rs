@@ -21,7 +21,7 @@ async fn main() {
         }
     }
     let mut camera = GridCamera::new();
-    let gd = GridDrawer::new(frontend::canvas::grid::GridDrawOptions::Shader, vec4(0.3, 0.3, 0.3, 0.3));
+    let gd = GridDrawer::new(frontend::canvas::grid::GridDrawOptions::Instanced, vec4(0.3, 0.3, 0.3, 0.3));
     let mut gui = App::new();
     let mut ws = WireSystem::new();
 
