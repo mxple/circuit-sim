@@ -1,6 +1,6 @@
-use crate::{GridCamera, glam::Vec2};
+use crate::{GridCamera, glam::Vec2, frontend::canvas::wiring::{Wire, WireVariant}};
 use macroquad::prelude::*;
-use miniquad::graphics::raw_gl::*;
+use miniquad::{RawId, graphics::raw_gl::*};
 use std::ffi::CStr;
 
 const VERTEX_SRC: &str = include_str!("shaders/instancing.vert");
@@ -12,10 +12,29 @@ pub struct InstancedWireRenderer {
     instance_vbo: u32,
     shader_id: u32,
     max_instances: usize,
+    render_target: RenderTarget,
 }
 
 impl InstancedWireRenderer {
     pub fn new(max_instances: usize) -> Self {
+        let scale = 16;
+        let width = scale * WireVariant::NUM_VARIANTS as u32;
+        let height = scale;
+        let target = render_target(width, height);
+        target.texture.set_filter(FilterMode::Nearest);
+        set_camera(&Camera2D {
+            zoom: vec2(2. / WireVariant::NUM_VARIANTS as f32, 2.),
+            target: vec2(0.5 * WireVariant::NUM_VARIANTS as f32 , 0.5),
+            render_target: Some(target.clone()),
+            ..Default::default()
+        });
+
+        for i in 0..WireVariant::NUM_VARIANTS {
+            let wire = Wire::new(Vec2::new(i as f32, 0.), WireVariant(i));
+            wire.draw();
+        }
+
+        set_default_camera();
         unsafe {
             let mut vao = 0;
             let mut vertex_vbo = 0;
@@ -27,6 +46,8 @@ impl InstancedWireRenderer {
 
             // Bind VAO first
             glBindVertexArray(vao);
+
+            let shader_id = create_shader_program();
 
             // Setup vertex buffer
             glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
@@ -84,8 +105,6 @@ impl InstancedWireRenderer {
             );
             glVertexAttribDivisor(2, 1);
 
-            let shader_id = create_shader_program();
-
             // Unbind everything
             glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -96,6 +115,7 @@ impl InstancedWireRenderer {
                 instance_vbo,
                 shader_id,
                 max_instances,
+                render_target: target,
             }
         }
     }
@@ -136,6 +156,15 @@ impl InstancedWireRenderer {
                 size as _,
                 wire_connections.as_ptr() as *const _,
             );
+
+            let gl_context = get_internal_gl();
+            let RawId::OpenGl(texture_id) = gl_context.quad_context.texture_raw_id(self.render_target.texture.raw_miniquad_id());
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture_id);
+
+            let loc = glGetUniformLocation(self.shader_id, b"u_texture\0".as_ptr() as *const _);
+            glUniform1i(loc, 0);
+
 
             // Draw
             glBindVertexArray(self.vao);
@@ -219,10 +248,10 @@ pub fn create_shader_program() -> u32 {
 }
 
 const WIRE_VERTICES: [f32; 12] = [
-    0.5, 0.4, // bl
-    1.0, 0.4, // br
-    1.0, 0.6, // tr
-    0.5, 0.4, // bl
-    1.0, 0.6, // tr
-    0.5, 0.6, // tl
+    0.0, 0.0, // bl
+    1.0, 0.0, // br
+    1.0, 1.0, // tr
+    0.0, 0.0, // bl
+    1.0, 1.0, // tr
+    0.0, 1.0, // tl
 ];

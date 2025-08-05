@@ -243,18 +243,7 @@ impl WireSystem {
                 && wire.position.y >= view_min.y - 1.0
                 && wire.position.y <= view_max.y + 1.0
             {
-                if wire.variant.has_east() {
-                    wire_connections.push((wire.position, 0.));
-                }
-                if wire.variant.has_north() {
-                    wire_connections.push((wire.position, 1.));
-                }
-                if wire.variant.has_west() {
-                    wire_connections.push((wire.position, 2.));
-                }
-                if wire.variant.has_south() {
-                    wire_connections.push((wire.position, 3.));
-                }
+                wire_connections.push((wire.position, wire.variant.0 as f32));
             }
         }
         self.instanced_renderer

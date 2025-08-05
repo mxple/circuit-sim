@@ -1,21 +1,34 @@
 use egui_macroquad::macroquad::prelude::*;
 
-pub struct WireVariant(pub u8);
+pub struct WireVariant(pub u16);
 
 // 4 bits to determine whether connections exist for N, E, S, W
 // 1 bit to determine if a wire with all 4 connections is a junction or overpass
 impl WireVariant {
     /// Bits for N, E, S, W connections: 0b0000_NESW
-    const NORTH: u8 = 0b1000;
-    const EAST: u8 = 0b0100;
-    const SOUTH: u8 = 0b0010;
-    const WEST: u8 = 0b0001;
+    const NORTH: u16 = 1 << 3;
+    const EAST: u16 = 1 << 2;
+    const SOUTH: u16 = 1 << 1;
+    const WEST: u16 = 1 << 0;
 
     /// Bit for junction (if all four connections), overpass if unset.
-    const JUNCTION_BIT: u8 = 0b10000;
+    const JUNCTION_BIT: u16 = 1 << 4;
+
+    /// If set on an overpass, horizontal wire is rendered on top of vertical wire.
+    const DEPTH: u16 = 1 << 5;
+
+    /// For non-overpass wires, COLOR_A is the primary color and COLOR_B is ignored.
+    /// For overpass wires, COLOR_A is the vertical wire's color and COLOR_B is the horizontal
+    /// wire's color.
+    const COLOR_A_1: u16 = 1 << 6;
+    const COLOR_A_2: u16 = 1 << 7;
+    const COLOR_B_1: u16 = 1 << 8;
+    const COLOR_B_2: u16 = 1 << 9;
+
+    pub const NUM_VARIANTS: u16 = 1 << 10;
 
     pub fn new(north: bool, east: bool, south: bool, west: bool, junction: bool) -> Self {
-        let mut value = 0u8;
+        let mut value = 0u16;
         if north {
             value |= Self::NORTH;
         }
@@ -62,6 +75,32 @@ impl WireVariant {
             == (Self::NORTH | Self::EAST | Self::SOUTH | Self::WEST)
             && (self.0 & Self::JUNCTION_BIT == 0)
     }
+    pub fn vertical_on_top(&self) -> bool {
+        self.0 & Self::DEPTH == 0
+    }
+    fn get_one_color(color_1: u16, color_2: u16) -> Color {
+        if color_1 == 0 && color_2 == 0 {
+            // ZERO
+            DARKGREEN
+        } else if color_1 == 0 && color_2 != 0 {
+            // ONE
+            GREEN
+        } else if color_1 != 0 && color_2 == 0 {
+            // HIGH IMPEDANCE
+            BLUE
+        } else if color_1 != 0 && color_2 != 0 {
+            // SHORT CIRCUIT
+            RED
+        } else {
+            unreachable!()
+        }
+    }
+    pub fn get_colors(&self) -> (Color, Color) {
+        (
+            Self::get_one_color(self.0 & Self::COLOR_A_1, self.0 & Self::COLOR_A_2),
+            Self::get_one_color(self.0 & Self::COLOR_B_1, self.0 & Self::COLOR_B_2),
+        )
+    }
 }
 use std::fmt;
 
@@ -99,12 +138,27 @@ impl Wire {
 
         let center = (scale - width * scale) / 2.0;
         let size = width * scale;
-        let color = GREEN;
+        let (color_a, color_b) = self.variant.get_colors();
 
         let is_overpass = self.variant.is_overpass();
-        let gap = if is_overpass { size * 0.75 } else { 0.0 };
+        let gap = if is_overpass { size * 1.00 } else { 0.0 };
 
-        draw_rectangle(pos.x + center, pos.y + center, size, size, color);
+
+        if self.variant.is_overpass() {
+            // let side = center + size / 2.0;
+            if self.variant.vertical_on_top() {
+                draw_rectangle(pos.x + center, pos.y, size, scale, color_a);
+                draw_rectangle(pos.x, pos.y + center, scale / 2. - gap, size, color_b);
+                draw_rectangle(pos.x + scale / 2. + gap, pos.y + center, scale / 2. - gap, size, color_b);
+            } else {
+                draw_rectangle(pos.x, pos.y + center, scale, size, color_b);
+                draw_rectangle(pos.x + center, pos.y, size, scale / 2. - gap, color_a);
+                draw_rectangle(pos.x + center, pos.y + scale / 2. + gap, size, scale / 2. - gap, color_a);
+            }
+            return;
+        }
+
+        draw_rectangle(pos.x + center, pos.y + center, size, size, color_a);
 
         if self.variant.has_north() {
             let height = if is_overpass {
@@ -112,7 +166,7 @@ impl Wire {
             } else {
                 center + size / 2.0
             };
-            draw_rectangle(pos.x + center, pos.y, size, height, color);
+            draw_rectangle(pos.x + center, pos.y, size, height, color_a);
         }
 
         if self.variant.has_south() {
@@ -126,7 +180,7 @@ impl Wire {
             } else {
                 center + size / 2.0
             };
-            draw_rectangle(pos.x + center, y_start, size, height, color);
+            draw_rectangle(pos.x + center, y_start, size, height, color_a);
         }
 
         if self.variant.has_east() {
@@ -135,12 +189,12 @@ impl Wire {
                 pos.y + center,
                 center + size / 2.0,
                 size,
-                color,
+                color_a,
             );
         }
 
         if self.variant.has_west() {
-            draw_rectangle(pos.x, pos.y + center, center + size / 2.0, size, color);
+            draw_rectangle(pos.x, pos.y + center, center + size / 2.0, size, color_a);
         }
     }
 }
