@@ -169,4 +169,12 @@ impl GridCamera {
         let world_point2 = self.screen_to_world(screen_point2);
         (world_point2 - world_point1).length()
     }
+
+    pub fn get_cell_pixels(&self) -> f32 {
+        let world_point1 = vec2(0.0, 0.0);
+        let world_point2 = vec2(0.0, 1.0);
+        let screen_point1 = self.world_to_screen(world_point1);
+        let screen_point2 = self.world_to_screen(world_point2);
+        (screen_point2 - screen_point1).length()
+    }
 }

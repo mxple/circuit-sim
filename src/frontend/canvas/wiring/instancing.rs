@@ -14,9 +14,14 @@ pub struct InstancedWireRenderer {
     max_instances: usize,
 }
 
+const GL_VERTEX_ARRAY_BINDING: GLenum = 0x85B5;
+
 impl InstancedWireRenderer {
     pub fn new(max_instances: usize) -> Self {
         unsafe {
+            let mut prev_vao = 0;
+            glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &mut prev_vao);
+
             let mut vao = 0;
             let mut vertex_vbo = 0;
             let mut instance_vbo = 0;
@@ -45,7 +50,7 @@ impl InstancedWireRenderer {
                 GL_FLOAT,
                 GL_FALSE.try_into().unwrap(),
                 0,
-                std::ptr::null(),
+                0 as _,
             );
 
             // Setup instance buffer with pre-allocated space
@@ -53,8 +58,8 @@ impl InstancedWireRenderer {
             glBufferData(
                 GL_ARRAY_BUFFER,
                 (max_instances * std::mem::size_of::<(Vec2, f32)>()) as _,
-                std::ptr::null(),
-                GL_DYNAMIC_DRAW, // Since we'll update this frequently
+                0 as _,
+                GL_DYNAMIC_DRAW,
             );
 
             // Instance data setup
@@ -68,7 +73,7 @@ impl InstancedWireRenderer {
                 GL_FLOAT,
                 GL_FALSE.try_into().unwrap(),
                 stride,
-                std::ptr::null(),
+                0 as _,
             );
             glVertexAttribDivisor(1, 1);
 
@@ -87,7 +92,7 @@ impl InstancedWireRenderer {
             let shader_id = create_shader_program();
 
             // Unbind everything
-            glBindVertexArray(0);
+            glBindVertexArray(prev_vao as u32);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
             Self {
@@ -115,6 +120,9 @@ impl InstancedWireRenderer {
         }
 
         unsafe {
+            let mut prev_vao = 0;
+            glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &mut prev_vao);
+
             glUseProgram(self.shader_id);
 
             // Update projection matrix
@@ -142,7 +150,7 @@ impl InstancedWireRenderer {
             glDrawArraysInstanced(GL_TRIANGLES, 0, 6, wire_connections.len() as _);
 
             // Clean up
-            glBindVertexArray(0);
+            glBindVertexArray(prev_vao as u32);
             glUseProgram(0);
         }
     }
@@ -215,6 +223,17 @@ pub fn create_shader_program() -> u32 {
         glDeleteShader(fragment_shader);
 
         program
+    }
+}
+
+impl Drop for InstancedWireRenderer {
+    fn drop(&mut self) {
+        unsafe {
+            glDeleteVertexArrays(1, &self.vao);
+            glDeleteBuffers(1, &self.vertex_vbo);
+            glDeleteBuffers(1, &self.instance_vbo);
+            glDeleteProgram(self.shader_id);
+        }
     }
 }
 
