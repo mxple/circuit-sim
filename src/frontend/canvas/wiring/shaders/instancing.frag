@@ -1,4 +1,4 @@
-#version 330
+#version 100
 precision mediump float;
 varying vec2 v_uv;
 uniform sampler2D u_texture;

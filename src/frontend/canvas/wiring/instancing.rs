@@ -17,7 +17,7 @@ pub struct InstancedWireRenderer {
 
 impl InstancedWireRenderer {
     pub fn new(max_instances: usize) -> Self {
-        let scale = 16;
+        let scale = 8;
         let width = scale * WireVariant::NUM_VARIANTS as u32;
         let height = scale;
         let target = render_target(width, height);
@@ -47,7 +47,6 @@ impl InstancedWireRenderer {
             // Bind VAO first
             glBindVertexArray(vao);
 
-            let shader_id = create_shader_program();
 
             // Setup vertex buffer
             glBindBuffer(GL_ARRAY_BUFFER, vertex_vbo);
@@ -104,6 +103,8 @@ impl InstancedWireRenderer {
                 std::mem::size_of::<Vec2>() as *const _,
             );
             glVertexAttribDivisor(2, 1);
+
+            let shader_id = create_shader_program();
 
             // Unbind everything
             glBindVertexArray(0);
