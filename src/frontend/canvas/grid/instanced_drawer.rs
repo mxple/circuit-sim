@@ -172,6 +172,11 @@ impl InstancedDrawer {
 impl GridDrawImpl for InstancedDrawer {
     fn draw_grid(&self, camera: &GridCamera, color: &Vec4) {
         unsafe {
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+            let mut color_with_alpha = color.clone();
+            color_with_alpha.w = camera.zoom / (200. - 10.);
+
             let mut prev_vao = 0;
             glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &mut prev_vao);
 
@@ -192,7 +197,7 @@ impl GridDrawImpl for InstancedDrawer {
             glUniform4fv(
                 loc,
                 1,
-                color.to_array().as_ptr(),
+                color_with_alpha.to_array().as_ptr(),
             );
 
             // Generate grid line instances
