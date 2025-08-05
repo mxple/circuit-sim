@@ -31,14 +31,6 @@ impl WireSystem {
             instanced_renderer: InstancedWireRenderer::new(1e6 as usize),
         };
 
-        for x in 0..500 {
-            for y in 0..500 {
-                let grid_key = (x, y);
-                let variant = WireVariant(0b1111);
-                let wire = Wire::new(Vec2::new(x as f32, y as f32), variant);
-                a.wires.insert(grid_key, wire);
-            }
-        }
         for i in 0..16 {
             let grid_key = (i as i32, 0);
             let variant = WireVariant(i);

@@ -1,7 +1,7 @@
 use egui_macroquad::macroquad::prelude::*;
 
 use frontend::canvas::camera::GridCamera;
-use frontend::canvas::grid::draw_grid;
+use frontend::canvas::grid::GridDrawer;
 use frontend::canvas::wiring::WireSystem;
 use frontend::gui::App;
 mod frontend;
@@ -21,6 +21,7 @@ async fn main() {
         }
     }
     let mut camera = GridCamera::new();
+    let gd = GridDrawer::new(frontend::canvas::grid::GridDrawOptions::Shader, vec4(0.3, 0.3, 0.3, 0.3));
     let mut gui = App::new();
     let mut ws = WireSystem::new();
 
@@ -53,10 +54,12 @@ async fn main() {
 
             clear_background(Color::new(0.1, 0.1, 0.1, 1.0));
             set_camera(&camera);
-            draw_grid(&camera);
+            gd.draw_grid(&camera);
             ws.draw_preview(&camera);
-
             ws.draw_wires(&camera);
+
+            gl_use_default_material();
+            set_default_camera();
             egui_macroquad::draw();
         }
 
