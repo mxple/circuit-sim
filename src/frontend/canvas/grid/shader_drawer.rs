@@ -2,7 +2,7 @@ use macroquad::prelude::*;
 use miniquad::{BlendFactor, BlendState, BlendValue, Equation, PipelineParams};
 use super::GridDrawImpl;
 
-use crate::frontend::canvas::camera::GridCamera;
+use crate::canvas::camera::GridCamera;
 
 pub struct ShaderDrawer {
     material: Material,

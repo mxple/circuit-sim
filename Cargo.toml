@@ -2,6 +2,7 @@
 name = "circuitsim"
 version = "0.1.0"
 edition = "2024"
+default-run = "frontend"
 
 [dependencies]
 egui = "0.31.1"
@@ -9,3 +10,16 @@ egui-macroquad = "0.17.3"
 epaint = "0.31.1"
 macroquad = "0.4.14"
 miniquad = "0.4.8"
+
+[lib]
+name = "backend"
+path = "src/backend/lib.rs"
+
+[[bin]]
+name = "console"
+path = "src/console/main.rs"
+
+[[bin]] 
+name = "frontend"
+path = "src/frontend/main.rs"
+

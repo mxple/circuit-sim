@@ -1,5 +1,5 @@
 use crate::App;
-use crate::frontend::gui::component_utils::{
+use crate::gui::component_utils::{
     CircuitComponentType, DrawInstruction, pos2_with_rect,
 };
 use egui_macroquad::egui::{Color32, Response, Sense, Stroke, Ui};

@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use super::GridDrawImpl;
 
-use crate::frontend::canvas::camera::GridCamera;
+use crate::canvas::camera::GridCamera;
 
 pub struct NaiveDrawer;
 

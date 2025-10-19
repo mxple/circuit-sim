@@ -1,4 +1,4 @@
-use crate::{GridCamera, glam::Vec2, frontend::canvas::wiring::{Wire, WireVariant}};
+use crate::{GridCamera, glam::Vec2, canvas::wiring::{Wire, WireVariant}};
 use macroquad::prelude::*;
 use miniquad::{RawId, graphics::raw_gl::*};
 use std::ffi::CStr;

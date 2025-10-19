@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use super::GridDrawImpl;
 
-use crate::frontend::{canvas::camera::GridCamera, util::shader::create_shader_program};
+use crate::{canvas::camera::GridCamera, util::shader::create_shader_program};
 
 use miniquad::graphics::raw_gl::*;
 

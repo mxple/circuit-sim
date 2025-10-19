@@ -1,11 +1,14 @@
 use egui_macroquad::macroquad::prelude::*;
 
-use frontend::canvas::camera::GridCamera;
-use frontend::canvas::grid::GridDrawer;
-use frontend::canvas::wiring::WireSystem;
-use frontend::gui::App;
-mod frontend;
+use crate::canvas::camera::GridCamera;
+use crate::canvas::grid::GridDrawer;
+use crate::canvas::wiring::WireSystem;
+use crate::gui::App;
+
 mod profiler;
+mod canvas;
+mod gui;
+mod util;
 
 #[macroquad::main("circuitsim")]
 async fn main() {
@@ -21,7 +24,7 @@ async fn main() {
         }
     }
     let mut camera = GridCamera::new();
-    let gd = GridDrawer::new(frontend::canvas::grid::GridDrawOptions::Instanced, vec4(0.3, 0.3, 0.3, 0.3));
+    let gd = GridDrawer::new(crate::canvas::grid::GridDrawOptions::Instanced, vec4(0.3, 0.3, 0.3, 0.3));
     let mut gui = App::new();
     let mut ws = WireSystem::new();
 
