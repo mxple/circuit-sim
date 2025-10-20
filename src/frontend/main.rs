@@ -51,6 +51,8 @@ async fn main() {
                 );
             } else if input.state == CanvasInputState::Wire {
                 ws.handle_input(&camera);
+            } else {
+                cs.handle_delete();
             }
 
             egui_macroquad::ui(|ctx| {
@@ -72,17 +74,20 @@ async fn main() {
             clear_background(Color::new(1.0, 1.0, 1.0, 1.0));
             set_camera(&camera);
             gd.draw_grid(&camera);
-            cs.draw_components(&camera, input.selection);
+            cs.draw_components(&camera);
             ws.draw_wires(&camera);
             if input.state == CanvasInputState::Wire {
                 ws.draw_preview(&camera);
             } else if input.state == CanvasInputState::Component {
-                cs.draw_preview(
+                cs.draw_new_component_preview(
                     &camera,
                     gui.get_selected_component().unwrap().to_component_data()
                 );
             } else if input.state == CanvasInputState::Idle {
-                input.draw_selection(&camera);
+                let draw_selection = cs.update_selection(input.in_progress_selection, input.selection);
+                if draw_selection {
+                    input.draw_selection(&camera);
+                }
             }
 
             gl_use_default_material();
@@ -90,7 +95,6 @@ async fn main() {
             egui_macroquad::draw();
         }
             input.handle_input(&camera, egui_wants_ptr);
-            cs.update_selection(input.selection);
 
         next_frame().await;
     }

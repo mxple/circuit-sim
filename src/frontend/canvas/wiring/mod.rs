@@ -300,7 +300,7 @@ impl WireSystem {
                 line_end.x,
                 line_end.y,
                 width,
-                Color::new(0.0, 1.0, 0.0, 0.6),
+                DARKGREEN,
             );
         }
 
@@ -313,7 +313,7 @@ impl WireSystem {
                 line_end.x,
                 line_end.y,
                 width,
-                Color::new(0.0, 1.0, 0.0, 0.6),
+                DARKGREEN,
             );
         }
 
@@ -325,7 +325,7 @@ impl WireSystem {
             size,
             size,
             width * 2.0,
-            Color::new(0.0, 1.0, 0.0, 0.8),
+            DARKGREEN,
         );
     }
 }

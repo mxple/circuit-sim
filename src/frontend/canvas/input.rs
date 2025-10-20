@@ -70,6 +70,12 @@ impl CanvasInput {
             }
             self.in_progress_selection = Some((end_pos, end_pos))
         } 
+        // if let Some((c1, c2)) = self.in_progress_selection {
+        //     self.selection = Some((
+        //         (c1.0 as i32, c1.1 as i32),
+        //         (c2.0 as i32, c2.1 as i32),
+        //     ));
+        // }
     }
 
     pub fn draw_selection(&self, camera: &GridCamera) {
