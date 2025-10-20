@@ -56,7 +56,7 @@ async fn main() {
             }
 
             egui_macroquad::ui(|ctx| {
-                gui.update(ctx, &mut input.state, &mut cs.get_selection_mut(input.selection));
+                gui.update(ctx, &mut input.state, &mut cs.get_selection_mut());
                 if enable_camera_debug {
                     camera.draw_egui_ui(ctx);
                 }

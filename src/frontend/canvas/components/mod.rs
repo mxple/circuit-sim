@@ -247,15 +247,12 @@ impl ComponentSystem {
 
     pub fn get_selection_mut(
         &mut self,
-        selection: Option<((i32, i32), (i32, i32))>,
     ) -> Vec<&mut ComponentData> {
         let mut selected = Vec::new();
 
-        if let Some(c) = selection {
-            for (&(comp_x, comp_y), (_, component)) in self.components.iter_mut() {
-                if component.intersects_selection(comp_x, comp_y, c) {
-                    selected.push(component);
-                }
+        for (_, (uuid, component)) in self.components.iter_mut() {
+            if self.selection.contains(uuid) {
+                selected.push(component);
             }
         }
 
