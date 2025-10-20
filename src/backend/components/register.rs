@@ -1,36 +1,41 @@
-use crate::{component::Component, tagged_value::TaggedValue, value::Value};
+use crate::{component::Component, pin_enum, value::Value};
 
 #[derive(Debug, Clone)]
 pub struct Register {
     pub stored: Value,
-    pub next: Value,
+    pub prev_lo: bool,
 }
 
 impl Register {
-    pub fn new(width: u8) -> Self {
-        let v = Value::floating(width);
-        Self { stored: v, next: v }
-    }
+    pin_enum!(I { DATA, EN, CLK, CLR });
+    pin_enum!(O { OUT });
 }
 
 impl Component for Register {
-    fn update_rising_edge(&mut self, _: &[Value]) -> Vec<TaggedValue> {
-        self.stored = self.next;
-        vec![TaggedValue::new("q", self.stored)]
+    fn init(&mut self) -> Vec<Value> {
+        let mut ret = [Value::default(); Self::O_TOTAL as usize];
+        ret[Self::O_OUT] = self.stored;
+        ret.into()
     }
 
-    fn update_normal(&mut self, inputs: &[Value]) -> Vec<TaggedValue> {
-        assert_eq!(inputs.len(), 1);
-        self.next = inputs[0];
-        vec![TaggedValue::new("q_next", self.next)]
+    fn update(&mut self, inputs: &[Value]) -> Vec<Value> {
+        let mut ret = [Value::default(); Self::O_TOTAL as usize];
+        ret[Self::O_OUT] = self.stored;
+        if inputs[Self::I_CLR].is_hi() {
+            self.prev_lo = false;
+            self.stored = inputs[Self::I_DATA];
+            ret[Self::O_OUT] = inputs[Self::I_DATA];
+        } else if inputs[Self::I_EN].is_hi() && self.prev_lo && inputs[Self::I_CLK].is_hi() {
+            self.prev_lo = false;
+            self.stored = inputs[Self::I_DATA];
+        }
+        ret.into()
     }
-
-    fn update_falling_edge(&mut self, _: &[Value]) -> Vec<TaggedValue> {
-        Vec::new()
+    
+    fn num_inputs(&self) -> usize {
+        Self::I_TOTAL
     }
-
-    fn send_state_to_frontend(&self) {
-        println!("Register stored={:?}", self.stored);
+    fn num_outputs(&self) -> usize {
+        Self::O_TOTAL
     }
 }
-

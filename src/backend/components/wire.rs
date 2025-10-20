@@ -1,4 +1,4 @@
-use crate::{component::Component, tagged_value::TaggedValue, value::Value};
+use crate::{component::Component, value::Value};
 
 #[derive(Debug, Clone)]
 pub struct Wire {
@@ -9,29 +9,29 @@ impl Wire {
     pub fn new(width: u8) -> Self {
         Self { width }
     }
-
-    fn update(&mut self, inputs: &[Value]) -> Vec<TaggedValue> {
-        assert!(inputs.len() == 1);
-        let out = inputs[0];
-        vec![TaggedValue::new("out", out)]
-    }
 }
 
 impl Component for Wire {
-    fn update_rising_edge(&mut self, inputs: &[Value]) -> Vec<TaggedValue> {
-        self.update(inputs)
+    fn init(&mut self) -> Vec<Value> {
+        vec![Value::floating(self.width)]
+    }
+    fn update(&mut self, inputs: &[Value]) -> Vec<Value> {
+        if inputs.is_empty() {
+            return vec![Value::floating(self.width)];
+        }
+        let short = inputs.iter().all(|&a| a == inputs[0]);
+        if short {
+            vec![inputs[0].burn()]
+        } else {
+            vec![inputs[0]]
+        }
     }
 
-    fn update_normal(&mut self, inputs: &[Value]) -> Vec<TaggedValue> {
-        self.update(inputs)
+    fn num_inputs(&self) -> usize {
+        0
     }
-
-    fn update_falling_edge(&mut self, inputs: &[Value]) -> Vec<TaggedValue> {
-        self.update(inputs)
-    }
-
-    fn send_state_to_frontend(&self) {
-        println!("Wire width={} (stateless)", self.width);
+    fn num_outputs(&self) -> usize {
+        0
     }
 }
 

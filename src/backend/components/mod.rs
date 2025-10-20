@@ -1,8 +1,10 @@
-pub mod and_gate;
+pub mod gates;
 pub mod register;
 pub mod wire;
 
-pub use and_gate::AndGate;
+#[macro_use]
+pub mod pin_enum;
+
+pub use gates::*;
 pub use register::Register;
 pub use wire::Wire;
-

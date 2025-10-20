@@ -2,7 +2,13 @@ use std::collections::VecDeque;
 use petgraph::graph::{Graph, NodeIndex, EdgeIndex};
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
-use crate::{component::Component, tagged_value::TaggedValue, value::Value};
+use crate::{component::Component, value::Value};
+
+struct TaggedValue {
+    inp: usize,
+    out: usize,
+    val: Value,
+}
 
 /// main circuit model
 pub struct Model {
@@ -28,10 +34,11 @@ impl Model {
         &mut self,
         src: NodeIndex,
         dst: NodeIndex,
-        tag: impl Into<String>,
-        value: Value,
+        inp: usize,
+        out: usize,
+        val: Value,
     ) -> EdgeIndex {
-        self.graph.add_edge(src, dst, TaggedValue::new(tag, value))
+        self.graph.add_edge(src, dst, TaggedValue {inp, out, val})
     }
 
     /// enqueue a component for processing
@@ -43,59 +50,39 @@ impl Model {
 
     /// helper: collect inputs to a node from incoming edges
     fn collect_inputs(&self, node: NodeIndex) -> Vec<Value> {
-        self.graph
-            .neighbors_directed(node, Direction::Incoming)
-            .filter_map(|src| {
-                self.graph.find_edge(src, node).map(|e| self.graph[e].value)
-            })
-            .collect()
+        let num_inputs = self.graph[node].num_inputs();
+        if num_inputs == 0 {
+            self.graph
+                .edges_directed(node, Direction::Incoming)
+                .map(|tv| tv.weight().val).collect()
+        } else {
+            let mut inputs = vec![Value::default(); num_inputs];
+            self.graph
+                .edges_directed(node, Direction::Incoming)
+                .for_each(|tv| inputs[tv.weight().out] = tv.weight().val);
+            inputs
+        }
     }
 
     /// helper: write outputs from a component to connected edges
-    fn write_outputs(&mut self, node: NodeIndex, outputs: Vec<TaggedValue>) {
+    fn write_outputs(&mut self, node: NodeIndex, outputs: Vec<Value>) {
         let edge_indices = self.graph.edges_directed(node, Direction::Outgoing).map(|e|
             e.id()).collect::<Vec<_>>();
         for e in edge_indices {
             let edge = &mut self.graph.edge_weight_mut(e).unwrap();
-
-            // match output tag
-            if let Some(tv) = outputs.iter().find(|tv| tv.tag == edge.tag) {
-                edge.value = tv.value;
-            } else {
-                debug_assert!(
-                    false,
-                    "component at {:?} did not produce output for tag '{}'",
-                    node,
-                    edge.tag
-                );
-            }
+            edge.val = outputs[edge.inp];
         }
     }
 
-    fn process_queue<F>(&mut self, mut phase_fn: F)
-    where
-        F: FnMut(&mut dyn Component, &[Value]) -> Vec<TaggedValue>,
-    {
+    fn process_queue(&mut self) {
         while let Some(node) = self.queue.pop_front() {
             let inputs = self.collect_inputs(node);
             let outputs = {
                 let comp = &mut self.graph[node];
-                phase_fn(comp.as_mut(), &inputs)
+                comp.update(&inputs)
             };
             self.write_outputs(node, outputs);
         }
-    }
-
-    pub fn run_normal(&mut self) {
-        self.process_queue(|c, inputs| c.update_normal(inputs));
-    }
-
-    pub fn run_rising_edge(&mut self) {
-        self.process_queue(|c, inputs| c.update_rising_edge(inputs));
-    }
-
-    pub fn run_falling_edge(&mut self) {
-        self.process_queue(|c, inputs| c.update_falling_edge(inputs));
     }
 
     pub fn clear_queue(&mut self) {
