@@ -1,6 +1,7 @@
+use crate::canvas::input::CanvasInputState;
 use crate::App;
 use crate::gui::component_utils::{
-    CircuitComponentType, DrawInstruction, pos2_with_rect,
+    GateType, DrawInstruction, pos2_with_rect,
 };
 use egui_macroquad::egui::{Color32, Response, Sense, Stroke, Ui};
 use epaint::{CubicBezierShape, Pos2};
@@ -10,7 +11,8 @@ impl App {
         &mut self,
         ui: &mut Ui,
         size: egui::Vec2,
-        component_type: CircuitComponentType,
+        component_type: GateType,
+        input_state: &mut CanvasInputState
     ) -> Response {
         let (rect, response) = ui.allocate_exact_size(size, Sense::all());
 
@@ -54,7 +56,7 @@ impl App {
             );
 
             if response.clicked() {
-                self.set_selected_component(Some(component_type));
+                self.set_selected_component(Some(component_type), input_state);
             }
             if response.drag_stopped() {
                 self.dragged_component = Some(component_type);

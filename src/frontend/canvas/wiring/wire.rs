@@ -121,6 +121,7 @@ impl fmt::Display for WireVariant {
 }
 
 pub struct Wire {
+    // TODO: is it necessary to store position in the wire itself?
     pub position: Vec2,
     pub variant: WireVariant,
 }

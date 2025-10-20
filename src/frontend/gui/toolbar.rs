@@ -1,3 +1,4 @@
+use crate::canvas::input::CanvasInputState;
 use crate::App;
 use crate::gui::component_utils::{DrawInstruction, pos2_with_rect};
 use egui_macroquad::egui::{
@@ -6,27 +7,27 @@ use egui_macroquad::egui::{
 use epaint::CubicBezierShape;
 
 impl App {
-    fn handle_hotbar_keys(&mut self, ctx: &egui::Context) {
+    fn handle_hotbar_keys(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState) {
         ctx.input(|i| {
             if i.key_down(Key::Num1) {
-                self.selected_component = self.hotbar_selections[0];
+                self.set_selected_component(self.hotbar_selections[0], input_state);
             }
             if i.key_down(Key::Num2) {
-                self.selected_component = self.hotbar_selections[1];
+                self.set_selected_component(self.hotbar_selections[1], input_state);
             }
             if i.key_down(Key::Num3) {
-                self.selected_component = self.hotbar_selections[2];
+                self.set_selected_component(self.hotbar_selections[2], input_state);
             }
             if i.key_down(Key::Num4) {
-                self.selected_component = self.hotbar_selections[3];
+                self.set_selected_component(self.hotbar_selections[3], input_state);
             }
             if i.key_down(Key::Num5) {
-                self.selected_component = self.hotbar_selections[4];
+                self.set_selected_component(self.hotbar_selections[4], input_state);
             }
         });
     }
 
-    fn hotbar_button(&mut self, size: egui::Vec2, ui: &mut Ui, index: usize) -> Response {
+    fn hotbar_button(&mut self, size: egui::Vec2, ui: &mut Ui, index: usize, input_state: &mut CanvasInputState) -> Response {
         let (rect, response) = ui.allocate_exact_size(size, Sense::all());
 
         if ui.is_rect_visible(rect) {
@@ -64,10 +65,9 @@ impl App {
             }
 
             if response.clicked() {
-                self.set_selected_component(button_contents);
+                self.set_selected_component(button_contents, input_state);
             }
-            if let Some(component) = self.get_selected_component()
-                && self.get_selected_component() == button_contents
+            if self.get_selected_component().is_some() && self.get_selected_component() == button_contents
             {
                 painter.rect_filled(padded_rect, 4.0, Color32::from_white_alpha(20));
             } else if response.contains_pointer() {
@@ -99,14 +99,14 @@ impl App {
         response
     }
 
-    pub fn render_toolbar(&mut self, ctx: &egui::Context) {
+    pub fn render_toolbar(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState) {
         TopBottomPanel::top("toolbar").show(ctx, |ui| {
             menu::bar(ui, |ui| {
                 for i in 0..Self::NUM_HOTBAR_BUTTONS {
-                    self.hotbar_button(Vec2::splat(40.0), ui, i);
+                    self.hotbar_button(Vec2::splat(40.0), ui, i, input_state);
                 }
             });
         });
-        self.handle_hotbar_keys(ctx);
+        self.handle_hotbar_keys(ctx, input_state);
     }
 }

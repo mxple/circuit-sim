@@ -1,17 +1,19 @@
-use component_utils::CircuitComponentType;
+use component_utils::GateType;
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
+use crate::canvas::input::CanvasInputState;
+
 mod component_selector;
-mod component_utils;
+pub mod component_utils;
 mod toolbar;
 
 pub struct App {
     expanded: bool,
-    selected_component: Option<CircuitComponentType>,
-    hotbar_selections: [Option<CircuitComponentType>; Self::NUM_HOTBAR_BUTTONS],
+    selected_component: Option<GateType>,
+    hotbar_selections: [Option<GateType>; Self::NUM_HOTBAR_BUTTONS],
     hovered_hotbar_button: Option<usize>,
-    dragged_component: Option<CircuitComponentType>,
+    dragged_component: Option<GateType>,
 }
 
 impl App {
@@ -28,15 +30,20 @@ impl App {
         }
     }
 
-    pub fn get_selected_component(&mut self) -> Option<CircuitComponentType> {
+    pub fn get_selected_component(&mut self) -> Option<GateType> {
         self.selected_component
     }
 
-    pub fn set_selected_component(&mut self, component: Option<CircuitComponentType>) {
+    pub fn set_selected_component(&mut self, component: Option<GateType>, input_state: &mut CanvasInputState) {
         self.selected_component = component;
+        if component.is_some() {
+            *input_state = CanvasInputState::Component;
+        } else {
+            *input_state = CanvasInputState::Idle;
+        }
     }
 
-    pub fn update(&mut self, ctx: &egui::Context) {
+    pub fn update(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState) {
         self.hovered_hotbar_button = None;
         self.dragged_component = None;
         use egui::*;
@@ -59,9 +66,11 @@ impl App {
                 "Native"
             };
             let version = env!("CARGO_PKG_VERSION");
+            let mode = format!("{:?}", input_state);
             ui.horizontal(|ui| {
                 ui.label(format!("Build: {}", build));
                 ui.label(format!("Version: {}", version));
+                ui.label(format!("Mode: {}", mode));
             });
         });
 
@@ -73,19 +82,20 @@ impl App {
                 ui.label("Components");
                 CollapsingHeader::new("Gates").show(ui, |ui| {
                     let gates = [
-                        CircuitComponentType::AndGate,
-                        CircuitComponentType::OrGate,
-                        CircuitComponentType::NandGate,
-                        CircuitComponentType::NorGate,
-                        CircuitComponentType::XorGate,
-                        CircuitComponentType::XnorGate,
-                        CircuitComponentType::NotGate,
+                        GateType::And,
+                        GateType::Or,
+                        GateType::Nand,
+                        GateType::Nor,
+                        GateType::Xor,
+                        GateType::Xnor,
+                        GateType::Not,
                     ];
                     for gate in gates {
                         self.circuit_component_button(
                             ui,
                             egui::Vec2::new(ui.available_size().x, 60.0),
                             gate,
+                            input_state
                         );
                     }
                 });
@@ -120,7 +130,7 @@ impl App {
             ui.label("test1");
         });
 
-        self.render_toolbar(ctx);
+        self.render_toolbar(ctx, input_state);
 
         // Ensure that each component can only be in one hotbar slot at a time
         if let Some(hovered_index) = self.hovered_hotbar_button
