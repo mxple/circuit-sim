@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use egui::ahash::HashSet;
 use egui_macroquad::macroquad::prelude::*;
+use uuid::Uuid;
 
 use crate::canvas::camera::GridCamera;
 
@@ -27,7 +29,7 @@ pub enum ComponentData {
 impl ComponentData {
     pub fn get_size(&self) -> (u32, u32) {
         match self {
-            Self::Gate { .. } => (3, 3),
+            Self::Gate { .. } => (4, 3),
             Self::Mux { .. } => todo!(),
         }
     }
@@ -35,6 +37,13 @@ impl ComponentData {
     pub fn get_input_offsets(&self) -> Vec<(u32, u32)> {
         match self {
             Self::Gate { .. } => vec![(0, 0), (0, 2)],
+            Self::Mux { .. } => todo!(),
+        }
+    }
+
+    pub fn get_output_offsets(&self) -> Vec<(u32, u32)> {
+        match self {
+            Self::Gate { .. } => vec![(3, 1)],
             Self::Mux { .. } => todo!(),
         }
     }
@@ -64,16 +73,17 @@ impl ComponentData {
 
 #[derive(Default)]
 pub struct ComponentSystem {
-    components: HashMap<(i32, i32), ComponentData>,
+    components: HashMap<(i32, i32), (Uuid, ComponentData)>,
+    selection: HashSet<Uuid>,
 }
 
 impl ComponentSystem {
     pub fn new() -> Self {
         let mut a = Self::default();
-        a.components.insert((0, 0), ComponentData::Gate {
+        a.components.insert((0, 0), (Uuid::new_v4(), ComponentData::Gate {
             gate_type: GateType::And,
             bitsize: 32,
-        });
+        }));
         a
     }
 
@@ -86,7 +96,7 @@ impl ComponentSystem {
         if is_mouse_button_pressed(MouseButton::Left) {
             self.components.insert(
                 end_pos,
-                selected_component,
+                (Uuid::new_v4(), selected_component),
             );
         }
     }
@@ -99,7 +109,7 @@ impl ComponentSystem {
         draw_rectangle(
             x as f32 + 0.5,
             y as f32,
-            selected_component.get_size().0 as f32,
+            selected_component.get_size().0 as f32 - 1.,
             selected_component.get_size().1 as f32,
             PURPLE.with_alpha(0.2),
         );
@@ -108,7 +118,7 @@ impl ComponentSystem {
     pub fn draw_components(&self, camera: &GridCamera, selection: Option<((i32, i32), (i32, i32))>) {
         // TODO: cull components outside camera boundaries
         let (view_min, view_max) = camera.get_view_bounds();
-        for ((x, y), component) in &self.components {
+        for ((x, y), (uuid, component)) in &self.components {
             let (w, h) = component.get_size();
             if ((x + w as i32) as f32) < view_min.x
                 || (*x as f32) > view_max.x
@@ -120,11 +130,12 @@ impl ComponentSystem {
             draw_rectangle(
                 *x as f32 + 0.5,
                 *y as f32,
-                w as f32,
+                w as f32 - 1.,
                 h as f32,
                 WHITE
             );
-            let border_color = if let Some(c) = selection && component.intersects_selection(*x, *y, c) {
+            // let border_color = if let Some(c) = selection && component.intersects_selection(*x, *y, c) {
+            let border_color = if self.selection.contains(uuid) {
                 ORANGE
             } else {
                 BLACK
@@ -132,8 +143,8 @@ impl ComponentSystem {
             draw_rectangle_lines(
                 *x as f32 + 0.5,
                 *y as f32,
-                component.get_size().0 as f32,
-                component.get_size().1 as f32,
+                w as f32 - 1.,
+                h as f32,
                 camera.get_pixel_thickness() * 4.0,
                 border_color
             );
@@ -145,15 +156,32 @@ impl ComponentSystem {
                     PORT_SIZE,
                     BLUE
                 );
-                // draw_circle_lines(
-                //     (*x + *dx as i32) as f32 + 0.5,
-                //     (*y + *dy as i32) as f32 + 0.5,
-                //     PORT_SIZE,
-                //     camera.get_pixel_thickness() * 2.0,
-                //     BLACK,
-                // );
+            }
+            for (dx, dy) in &component.get_output_offsets() {
+                draw_circle(
+                    (*x + *dx as i32) as f32 + 0.5,
+                    (*y + *dy as i32) as f32 + 0.5,
+                    PORT_SIZE,
+                    BLUE
+                );
             }
         }
+    }
+
+    pub fn update_selection(
+        &mut self,
+        selection: Option<((i32, i32), (i32, i32))>,
+    ) {
+        if let Some(c) = selection {
+            for (&(comp_x, comp_y), (uuid, component)) in self.components.iter_mut() {
+                if component.intersects_selection(comp_x, comp_y, c) {
+                    self.selection.insert(*uuid);
+                }
+            }
+        } else {
+            self.selection.clear();
+        }
+
     }
 
     pub fn get_selection_mut(
@@ -163,7 +191,7 @@ impl ComponentSystem {
         let mut selected = Vec::new();
 
         if let Some(c) = selection {
-            for (&(comp_x, comp_y), component) in self.components.iter_mut() {
+            for (&(comp_x, comp_y), (_, component)) in self.components.iter_mut() {
                 if component.intersects_selection(comp_x, comp_y, c) {
                     selected.push(component);
                 }

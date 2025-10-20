@@ -65,7 +65,9 @@ impl CanvasInput {
             return;
         }
         if is_mouse_button_pressed(MouseButton::Left) {
-            self.selection = None;
+            if !(is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift)) {
+                self.selection = None;
+            }
             self.in_progress_selection = Some((end_pos, end_pos))
         } 
     }
@@ -79,32 +81,8 @@ impl CanvasInput {
                 c2.1 - c1.1,
                 BLUE.with_alpha(0.2),
             );
-        } else if let Some((c1, c2)) = self.selection {
-            draw_rectangle(
-                c1.0 as f32,
-                c1.1 as f32,
-                c2.0 as f32 - c1.0 as f32,
-                c2.1 as f32 - c1.1 as f32,
-                BLUE.with_alpha(0.05),
-            );
-            draw_rectangle_lines(
-                c1.0 as f32,
-                c1.1 as f32,
-                c2.0 as f32 - c1.0 as f32,
-                c2.1 as f32 - c1.1 as f32,
-                camera.get_pixel_thickness() * 4.0,
-                BLUE
-            );
-            // let _  =((c1.0 as f32, c1.1 as f32), (c2.0 as f32, c2.1 as f32));
         } else {
             return
         };
-        // draw_rectangle(
-        //     c1.0 as f32,
-        //     c1.1 as f32,
-        //     c2.0 - c1.0,
-        //     c2.1 - c1.1,
-        //     BLUE.with_alpha(0.2),
-        // );
     }
 }

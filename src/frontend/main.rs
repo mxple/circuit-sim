@@ -90,6 +90,7 @@ async fn main() {
             egui_macroquad::draw();
         }
             input.handle_input(&camera, egui_wants_ptr);
+            cs.update_selection(input.selection);
 
         next_frame().await;
     }
