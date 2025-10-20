@@ -1,7 +1,18 @@
 use std::collections::HashMap;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::{canvas::camera::GridCamera, gui::component_utils::GateType};
+use crate::canvas::camera::GridCamera;
+
+#[derive(PartialEq, Eq, Copy, Clone)]
+pub enum GateType {
+    And,
+    Or,
+    Nand,
+    Nor,
+    Xor,
+    Xnor,
+    Not,
+}
 
 pub enum ComponentData {
     Gate {

@@ -1,7 +1,7 @@
 use crate::canvas::input::CanvasInputState;
 use crate::App;
 use crate::gui::component_utils::{
-    GateType, DrawInstruction, pos2_with_rect,
+    pos2_with_rect, DrawInstruction, GuiComponentType
 };
 use egui_macroquad::egui::{Color32, Response, Sense, Stroke, Ui};
 use epaint::{CubicBezierShape, Pos2};
@@ -11,7 +11,7 @@ impl App {
         &mut self,
         ui: &mut Ui,
         size: egui::Vec2,
-        component_type: GateType,
+        component_type: GuiComponentType,
         input_state: &mut CanvasInputState
     ) -> Response {
         let (rect, response) = ui.allocate_exact_size(size, Sense::all());

@@ -1,5 +1,7 @@
 use epaint::Pos2;
 
+use crate::canvas::components::{ComponentData, GateType};
+
 pub enum DrawInstruction {
     Line([Pos2; 2]),
     CubicBezierCurve([Pos2; 4]),
@@ -13,26 +15,59 @@ pub fn pos2_with_rect(pos: &Pos2, rect: egui::Rect) -> Pos2 {
 }
 
 #[derive(PartialEq, Eq, Copy, Clone)]
-pub enum GateType {
-    And,
-    Or,
-    Nand,
-    Nor,
-    Xor,
-    Xnor,
-    Not,
+pub enum GuiComponentType {
+    AndGate,
+    OrGate,
+    NandGate,
+    NorGate,
+    XorGate,
+    XnorGate,
+    NotGate,
 }
 
-impl GateType {
+impl GuiComponentType {
+    pub fn to_component_data(&self) -> ComponentData {
+        match self {
+            Self::AndGate => ComponentData::Gate {
+                gate_type: GateType::And,
+                bitsize: 1,
+            },
+            Self::OrGate => ComponentData::Gate {
+                gate_type: GateType::Or,
+                bitsize: 1,
+            },
+            Self::NandGate => ComponentData::Gate {
+                gate_type: GateType::Nand,
+                bitsize: 1,
+            },
+            Self::NorGate => ComponentData::Gate {
+                gate_type: GateType::Nor,
+                bitsize: 1,
+            },
+            Self::XorGate => ComponentData::Gate {
+                gate_type: GateType::Xor,
+                bitsize: 1,
+            },
+            Self::XnorGate => ComponentData::Gate {
+                gate_type: GateType::Xnor,
+                bitsize: 1,
+            },
+            Self::NotGate => ComponentData::Gate {
+                gate_type: GateType::Not,
+                bitsize: 1,
+            },
+        }
+    }
+
     pub fn get_label(&self) -> &'static str {
         match self {
-            Self::And => "AND Gate",
-            Self::Or => "OR Gate",
-            Self::Nand => "NAND Gate",
-            Self::Nor => "NOR Gate",
-            Self::Xor => "XOR Gate",
-            Self::Xnor => "XNOR Gate",
-            Self::Not => "NOT Gate",
+            Self::AndGate => "AND Gate",
+            Self::OrGate => "OR Gate",
+            Self::NandGate => "NAND Gate",
+            Self::NorGate => "NOR Gate",
+            Self::XorGate => "XOR Gate",
+            Self::XnorGate => "XNOR Gate",
+            Self::NotGate => "NOT Gate",
         }
     }
 
@@ -83,13 +118,15 @@ impl GateType {
 
     pub fn get_draw_instructions(&self) -> &'static [DrawInstruction] {
         match self {
-            Self::And => &Self::AND_GATE_DRAW_INSTRUCTIONS,
-            Self::Or => &Self::OR_GATE_DRAW_INSTRUCTIONS,
-            Self::Nand => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
-            Self::Nor => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
-            Self::Xor => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
-            Self::Xnor => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
-            Self::Not => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
+            Self::AndGate => &Self::AND_GATE_DRAW_INSTRUCTIONS,
+            Self::OrGate => &Self::OR_GATE_DRAW_INSTRUCTIONS,
+            Self::NandGate => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
+            Self::NorGate => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
+            Self::XorGate => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
+            Self::XnorGate => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
+            Self::NotGate => &Self::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
         }
     }
 }
+
+

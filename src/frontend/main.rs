@@ -47,10 +47,7 @@ async fn main() {
             if input_state == CanvasInputState::Component {
                 cs.handle_input(
                     &camera,
-                    ComponentData::Gate {
-                        gate_type: gui.get_selected_component().unwrap(),
-                        bitsize: 1,
-                    }
+                    gui.get_selected_component().unwrap().to_component_data()
                 );
             } else if input_state == CanvasInputState::Wire {
                 ws.handle_input(&camera);
@@ -80,10 +77,7 @@ async fn main() {
             } else if input_state == CanvasInputState::Component {
                 cs.draw_preview(
                     &camera,
-                    ComponentData::Gate {
-                        gate_type: gui.get_selected_component().unwrap(),
-                        bitsize: 1,
-                    }
+                    gui.get_selected_component().unwrap().to_component_data()
                 );
             }
 

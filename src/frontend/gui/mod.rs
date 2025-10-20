@@ -1,8 +1,8 @@
-use component_utils::GateType;
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::canvas::input::CanvasInputState;
+use crate::gui::component_utils::GuiComponentType;
 
 mod component_selector;
 pub mod component_utils;
@@ -10,10 +10,10 @@ mod toolbar;
 
 pub struct App {
     expanded: bool,
-    selected_component: Option<GateType>,
-    hotbar_selections: [Option<GateType>; Self::NUM_HOTBAR_BUTTONS],
+    selected_component: Option<GuiComponentType>,
+    hotbar_selections: [Option<GuiComponentType>; Self::NUM_HOTBAR_BUTTONS],
     hovered_hotbar_button: Option<usize>,
-    dragged_component: Option<GateType>,
+    dragged_component: Option<GuiComponentType>,
 }
 
 impl App {
@@ -30,11 +30,11 @@ impl App {
         }
     }
 
-    pub fn get_selected_component(&mut self) -> Option<GateType> {
+    pub fn get_selected_component(&mut self) -> Option<GuiComponentType> {
         self.selected_component
     }
 
-    pub fn set_selected_component(&mut self, component: Option<GateType>, input_state: &mut CanvasInputState) {
+    pub fn set_selected_component(&mut self, component: Option<GuiComponentType>, input_state: &mut CanvasInputState) {
         self.selected_component = component;
         if component.is_some() {
             *input_state = CanvasInputState::Component;
@@ -82,13 +82,13 @@ impl App {
                 ui.label("Components");
                 CollapsingHeader::new("Gates").show(ui, |ui| {
                     let gates = [
-                        GateType::And,
-                        GateType::Or,
-                        GateType::Nand,
-                        GateType::Nor,
-                        GateType::Xor,
-                        GateType::Xnor,
-                        GateType::Not,
+                        GuiComponentType::AndGate,
+                        GuiComponentType::OrGate,
+                        GuiComponentType::NandGate,
+                        GuiComponentType::NorGate,
+                        GuiComponentType::XorGate,
+                        GuiComponentType::XnorGate,
+                        GuiComponentType::NotGate,
                     ];
                     for gate in gates {
                         self.circuit_component_button(
