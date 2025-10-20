@@ -16,6 +16,20 @@ pub enum GateType {
     Not,
 }
 
+impl GateType {
+    pub fn get_name(&self) -> &'static str {
+        match self {
+            Self::And => "AND",
+            Self::Or => "OR",
+            Self::Nand => "NAND",
+            Self::Nor => "NOR",
+            Self::Xor => "XOR",
+            Self::Xnor => "XNOR",
+            Self::Not => "NOT",
+        }
+    }
+}
+
 pub enum ComponentData {
     Gate {
         gate_type: GateType,
@@ -29,21 +43,33 @@ pub enum ComponentData {
 impl ComponentData {
     pub fn get_size(&self) -> (u32, u32) {
         match self {
-            Self::Gate { .. } => (4, 3),
+            Self::Gate { gate_type, .. } => if *gate_type == GateType::Not {
+                (3, 1)
+            } else {
+                (4, 3)
+            },
             Self::Mux { .. } => todo!(),
         }
     }
 
     pub fn get_input_offsets(&self) -> Vec<(u32, u32)> {
         match self {
-            Self::Gate { .. } => vec![(0, 0), (0, 2)],
+            Self::Gate { gate_type, .. } => if *gate_type == GateType::Not {
+                vec![(0, 0)]
+            } else {
+                vec![(0, 0), (0, 2)]
+            },
             Self::Mux { .. } => todo!(),
         }
     }
 
     pub fn get_output_offsets(&self) -> Vec<(u32, u32)> {
         match self {
-            Self::Gate { .. } => vec![(3, 1)],
+            Self::Gate { gate_type, .. } => if *gate_type == GateType::Not {
+                vec![(2, 0)]
+            } else {
+                vec![(3, 1)]
+            }
             Self::Mux { .. } => todo!(),
         }
     }
@@ -73,6 +99,23 @@ impl ComponentData {
             && sel_max_y >= comp_min_y;
 
         intersects
+    }
+
+    pub fn get_name(&self) -> &'static str {
+        match self {
+            Self::Gate { gate_type, .. } => {
+                match gate_type {
+                    GateType::And => "AND gate",
+                    GateType::Or => "OR gate",
+                    GateType::Nand => "NAND gate",
+                    GateType::Nor => "NOR gate",
+                    GateType::Xor => "XOR gate",
+                    GateType::Xnor => "XNOR gate",
+                    GateType::Not => "NOT gate",
+                }
+            }
+            Self::Mux { .. } => "Multiplexer",
+        }
     }
 }
 

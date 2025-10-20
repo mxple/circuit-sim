@@ -1,7 +1,7 @@
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::canvas::components::ComponentData;
+use crate::canvas::components::{ComponentData, GateType};
 use crate::canvas::input::CanvasInputState;
 use crate::gui::component_utils::GuiComponentType;
 
@@ -102,7 +102,19 @@ impl App {
                         }
                     });
                     ui.separator();
-                    ui.label("Properties");
+                    fn gate_type_dropdown(ui: &mut Ui, data: &mut GateType) {
+                        ComboBox::from_label("Gate type")
+                            .selected_text(data.get_name())
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(data, GateType::And, "AND");
+                                ui.selectable_value(data, GateType::Or, "OR");
+                                ui.selectable_value(data, GateType::Nand, "NAND");
+                                ui.selectable_value(data, GateType::Nor, "NOR");
+                                ui.selectable_value(data, GateType::Xor, "XOR");
+                                ui.selectable_value(data, GateType::Xnor, "XNOR");
+                                ui.selectable_value(data, GateType::Not, "NOT");
+                            });
+                    }
                     fn bitsize_dropdown(ui: &mut Ui, data: &mut u8) {
                         ComboBox::from_label("Bitsize")
                             .selected_text(data.to_string())
@@ -113,11 +125,13 @@ impl App {
                             });
                     }
                     if selection.len() == 1 && let Some(c) = selection.get_mut(0) {
+                        ui.label(c.get_name());
                         match *c {
                             ComponentData::Gate {
                                 gate_type,
                                 bitsize
                             } => {
+                                gate_type_dropdown(ui, gate_type);
                                 bitsize_dropdown(ui, bitsize);
                             }
                             ComponentData::Mux {
