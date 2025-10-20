@@ -1,7 +1,7 @@
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::canvas::camera::GridCamera;
-use crate::canvas::components::ComponentSystem;
+use crate::canvas::components::{ComponentData, ComponentSystem};
 use crate::canvas::grid::GridDrawer;
 use crate::canvas::input::CanvasInputState;
 use crate::canvas::wiring::WireSystem;
@@ -45,7 +45,13 @@ async fn main() {
             camera.update(dt);
             input_state.handle_input();
             if input_state == CanvasInputState::Component {
-                cs.handle_input(&camera, gui.get_selected_component().unwrap());
+                cs.handle_input(
+                    &camera,
+                    ComponentData::Gate {
+                        gate_type: gui.get_selected_component().unwrap(),
+                        bitsize: 1,
+                    }
+                );
             } else if input_state == CanvasInputState::Wire {
                 ws.handle_input(&camera);
             }
@@ -71,7 +77,14 @@ async fn main() {
             ws.draw_wires(&camera);
             if input_state == CanvasInputState::Wire {
                 ws.draw_preview(&camera);
-            } else {
+            } else if input_state == CanvasInputState::Component {
+                cs.draw_preview(
+                    &camera,
+                    ComponentData::Gate {
+                        gate_type: gui.get_selected_component().unwrap(),
+                        bitsize: 1,
+                    }
+                );
             }
 
             gl_use_default_material();

@@ -13,55 +13,64 @@ pub enum ComponentData {
     },
 }
 
-pub struct Component {
-    /// Component-specific data
-    data: ComponentData,
-    /// Size of the component (width, height)
-    size: (u32, u32),
-    /// Offsets of input pins from top left
-    input_offsets: Vec<(u32, u32)>,
+impl ComponentData {
+    pub fn get_size(&self) -> (u32, u32) {
+        match self {
+            Self::Gate { .. } => (3, 3),
+            Self::Mux { .. } => todo!(),
+        }
+    }
+
+    pub fn get_input_offsets(&self) -> Vec<(u32, u32)> {
+        match self {
+            Self::Gate { .. } => vec![(0, 0), (0, 2)],
+            Self::Mux { .. } => todo!(),
+        }
+    }
 }
 
 #[derive(Default)]
 pub struct ComponentSystem {
-    components: HashMap<(i32, i32), Component>,
+    components: HashMap<(i32, i32), ComponentData>,
 }
 
 impl ComponentSystem {
     pub fn new() -> Self {
         let mut a = Self::default();
-        a.components.insert((0, 0), Component {
-            data: ComponentData::Gate {
-                gate_type: GateType::And,
-                bitsize: 32,
-            },
-            size: (3, 3),
-            input_offsets: vec![
-                (0, 0),
-                (0, 2),
-            ],
+        a.components.insert((0, 0), ComponentData::Gate {
+            gate_type: GateType::And,
+            bitsize: 32,
         });
         a
     }
 
-    pub fn handle_input(&mut self, camera:  &GridCamera, selected_component: GateType) {
+    pub fn handle_input(&mut self, camera:  &GridCamera, selected_component: ComponentData) {
         let mouse_screen = Vec2::new(mouse_position().0, mouse_position().1);
         let mouse_world = camera.screen_to_world(mouse_screen);
         let end_pos = (mouse_world.x.floor() as i32, mouse_world.y.floor() as i32);
+        let end_pos = (end_pos.0 - selected_component.get_size().0 as i32 / 2, end_pos.1 - selected_component.get_size().1 as i32 / 2);
 
         if is_mouse_button_pressed(MouseButton::Left) {
             self.components.insert(
                 end_pos,
-                Component {
-                    data: ComponentData::Gate {
-                        gate_type: selected_component,
-                        bitsize: 1,
-                    },
-                    size: (3, 3),
-                    input_offsets: vec![(0, 0), (0, 2)]
-                }
+                selected_component,
             );
         }
+    }
+
+    pub fn draw_preview(&self, camera: &GridCamera, selected_component: ComponentData) {
+        let mouse_screen = Vec2::new(mouse_position().0, mouse_position().1);
+        let mouse_world = camera.screen_to_world(mouse_screen);
+        let (x, y) = (mouse_world.x.floor() as i32, mouse_world.y.floor() as i32);
+        let (x, y) = (x - selected_component.get_size().0 as i32 / 2, y - selected_component.get_size().1 as i32 / 2);
+        draw_rectangle_lines(
+            x as f32 + 0.5,
+            y as f32,
+            selected_component.get_size().0 as f32,
+            selected_component.get_size().1 as f32,
+            0.1,
+            GREEN,
+        );
     }
 
     pub fn draw_components(&self, camera: &GridCamera) {
@@ -71,20 +80,20 @@ impl ComponentSystem {
             draw_rectangle(
                 *x as f32 + 0.5,
                 *y as f32,
-                component.size.0 as f32,
-                component.size.1 as f32,
+                component.get_size().0 as f32,
+                component.get_size().1 as f32,
                 WHITE
             );
             draw_rectangle_lines(
                 *x as f32 + 0.5,
                 *y as f32,
-                component.size.0 as f32,
-                component.size.1 as f32,
+                component.get_size().0 as f32,
+                component.get_size().1 as f32,
                 0.1,
                 BLACK
             );
             const PORT_SIZE: f32 = 0.2;
-            for (dx, dy) in &component.input_offsets {
+            for (dx, dy) in &component.get_input_offsets() {
                 draw_circle(
                     (*x + *dx as i32) as f32 + 0.5,
                     (*y + *dy as i32) as f32 + 0.5,
