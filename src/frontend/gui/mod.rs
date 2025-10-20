@@ -1,6 +1,7 @@
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
+use crate::canvas::components::ComponentData;
 use crate::canvas::input::CanvasInputState;
 use crate::gui::component_utils::GuiComponentType;
 
@@ -43,7 +44,7 @@ impl App {
         }
     }
 
-    pub fn update(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState) {
+    pub fn update(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState, selection: &mut [&mut ComponentData]) {
         self.hovered_hotbar_button = None;
         self.dragged_component = None;
         use egui::*;
@@ -79,24 +80,52 @@ impl App {
             .max_width(screen_width() / 6.)
             .resizable(false)
             .show_animated(ctx, self.expanded, |ui| {
-                ui.label("Components");
-                CollapsingHeader::new("Gates").show(ui, |ui| {
-                    let gates = [
-                        GuiComponentType::AndGate,
-                        GuiComponentType::OrGate,
-                        GuiComponentType::NandGate,
-                        GuiComponentType::NorGate,
-                        GuiComponentType::XorGate,
-                        GuiComponentType::XnorGate,
-                        GuiComponentType::NotGate,
-                    ];
-                    for gate in gates {
-                        self.circuit_component_button(
-                            ui,
-                            egui::Vec2::new(ui.available_size().x, 60.0),
-                            gate,
-                            input_state
-                        );
+                ui.allocate_ui(ui.available_size(), |ui| {
+                    ui.label("Components");
+                    CollapsingHeader::new("Gates").show(ui, |ui| {
+                        let gates = [
+                            GuiComponentType::AndGate,
+                            GuiComponentType::OrGate,
+                            GuiComponentType::NandGate,
+                            GuiComponentType::NorGate,
+                            GuiComponentType::XorGate,
+                            GuiComponentType::XnorGate,
+                            GuiComponentType::NotGate,
+                        ];
+                        for gate in gates {
+                            self.circuit_component_button(
+                                ui,
+                                egui::Vec2::new(ui.available_size().x, 60.0),
+                                gate,
+                                input_state
+                            );
+                        }
+                    });
+                    ui.separator();
+                    ui.label("Properties");
+                    fn bitsize_dropdown(ui: &mut Ui, data: &mut u8) {
+                        ComboBox::from_label("Bitsize")
+                            .selected_text(data.to_string())
+                            .show_ui(ui, |ui| {
+                                for i in 1..=32 {
+                                    ui.selectable_value(data, i, i.to_string());
+                                }
+                            });
+                    }
+                    if selection.len() == 1 && let Some(c) = selection.get_mut(0) {
+                        match *c {
+                            ComponentData::Gate {
+                                gate_type,
+                                bitsize
+                            } => {
+                                bitsize_dropdown(ui, bitsize);
+                            }
+                            ComponentData::Mux {
+                                bitsize
+                            } => {
+                                bitsize_dropdown(ui, bitsize);
+                            }
+                        }
                     }
                 });
             });
@@ -125,10 +154,6 @@ impl App {
                     Color32::LIGHT_GRAY,
                 );
             });
-
-        SidePanel::right("Right").show(ctx, |ui| {
-            ui.label("test1");
-        });
 
         self.render_toolbar(ctx, input_state);
 

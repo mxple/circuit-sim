@@ -254,7 +254,7 @@ impl WireSystem {
                 size,
                 size,
                 camera.get_pixel_thickness() * 2.0,
-                GREEN,
+                DARKGREEN,
             );
 
             if is_key_down(KeyCode::LeftShift) || is_key_down(KeyCode::RightShift) {
