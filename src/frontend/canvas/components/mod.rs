@@ -81,6 +81,7 @@ pub struct ComponentSystem {
     components: HashMap<(i32, i32), (Uuid, ComponentData)>,
     selection: HashSet<Uuid>,
     drag_delta: (i32, i32),
+    drag_handled: bool,
 }
 
 impl ComponentSystem {
@@ -208,6 +209,9 @@ impl ComponentSystem {
         in_progress_selection: Option<((f32, f32), (f32, f32))>,
         selection: Option<((i32, i32), (i32, i32))>,
     ) -> bool {
+        if in_progress_selection.is_some() {
+            self.drag_handled = false;
+        }
         if let Some(c) = selection {
             if self.drag_delta != (0, 0) {
                 let mut to_move = Vec::new();
@@ -222,10 +226,12 @@ impl ComponentSystem {
                     }
                 }
                 self.drag_delta = (0, 0);
-            }
-            for (&(comp_x, comp_y), (uuid, component)) in self.components.iter_mut() {
-                if component.intersects_selection(comp_x, comp_y, c) {
-                    self.selection.insert(*uuid);
+                self.drag_handled = true;
+            } else if !self.drag_handled {
+                for (&(comp_x, comp_y), (uuid, component)) in self.components.iter_mut() {
+                    if component.intersects_selection(comp_x, comp_y, c) {
+                        self.selection.insert(*uuid);
+                    }
                 }
             }
         } else if let Some((start, end)) = in_progress_selection {
@@ -241,6 +247,7 @@ impl ComponentSystem {
             self.selection.clear();
         } else {
             self.selection.clear();
+            self.drag_handled = false;
         }
         return true;
     }
