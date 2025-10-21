@@ -99,6 +99,10 @@ impl ComponentData {
                 match gate_type {
                     GateType::And => &draw::AND_GATE_DRAW_INSTRUCTIONS,
                     GateType::Or => &draw::OR_GATE_DRAW_INSTRUCTIONS,
+                    GateType::Nand => &draw::NAND_GATE_DRAW_INSTRUCTIONS,
+                    GateType::Nor => &draw::NOR_GATE_DRAW_INSTRUCTIONS,
+                    GateType::Xor => &draw::XOR_GATE_DRAW_INSTRUCTIONS,
+                    GateType::Xnor => &draw::XNOR_GATE_DRAW_INSTRUCTIONS,
                     GateType::Not => &draw::NOT_GATE_DRAW_INSTRUCTIONS,
                     _ => &draw::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
                 }
@@ -202,7 +206,7 @@ impl ComponentSystem {
             orientation: Orientation::Zero,
             label: String::new(),
             data: ComponentData::Gate {
-                gate_type: GateType::Not,
+                gate_type: GateType::Xnor,
                 bitsize: 32,
             },
         });
