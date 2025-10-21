@@ -149,9 +149,9 @@ impl Component {
 
             // Check for intersection
         let intersects = sel_min_x <= comp_max_x
-            && sel_max_x >= comp_min_x
+            && sel_max_x > comp_min_x
             && sel_min_y <= comp_max_y
-            && sel_max_y >= comp_min_y;
+            && sel_max_y > comp_min_y;
 
         intersects
     }
