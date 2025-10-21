@@ -1,7 +1,7 @@
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
-use crate::canvas::components::{ComponentData, GateType};
+use crate::canvas::components::{Component, ComponentData, GateType, Orientation};
 use crate::canvas::input::CanvasInputState;
 use crate::gui::component_utils::GuiComponentType;
 
@@ -44,7 +44,7 @@ impl App {
         }
     }
 
-    pub fn update(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState, selection: &mut [&mut ComponentData]) {
+    pub fn update(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState, selection: &mut [&mut Component]) {
         self.hovered_hotbar_button = None;
         self.dragged_component = None;
         use egui::*;
@@ -102,6 +102,16 @@ impl App {
                         }
                     });
                     ui.separator();
+                    fn orientation_dropdown(ui: &mut Ui, data: &mut Orientation) {
+                        ComboBox::from_label("Orientation")
+                            .selected_text(data.get_name())
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(data, Orientation::Zero, Orientation::Zero.get_name());
+                                ui.selectable_value(data, Orientation::One, Orientation::One.get_name());
+                                ui.selectable_value(data, Orientation::Two, Orientation::Two.get_name());
+                                ui.selectable_value(data, Orientation::Three, Orientation::Three.get_name());
+                            });
+                    }
                     fn gate_type_dropdown(ui: &mut Ui, data: &mut GateType) {
                         ComboBox::from_label("Gate type")
                             .selected_text(data.get_name())
@@ -125,17 +135,18 @@ impl App {
                             });
                     }
                     if selection.len() == 1 && let Some(c) = selection.get_mut(0) {
-                        ui.label(c.get_name());
-                        match *c {
+                        ui.label(c.data.get_name());
+                        orientation_dropdown(ui, &mut c.orientation);
+                        match (*c).data {
                             ComponentData::Gate {
-                                gate_type,
-                                bitsize
+                                ref mut gate_type,
+                                ref mut bitsize
                             } => {
                                 gate_type_dropdown(ui, gate_type);
                                 bitsize_dropdown(ui, bitsize);
                             }
                             ComponentData::Mux {
-                                bitsize
+                                ref mut bitsize
                             } => {
                                 bitsize_dropdown(ui, bitsize);
                             }
