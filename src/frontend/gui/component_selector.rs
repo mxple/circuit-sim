@@ -44,6 +44,7 @@ impl App {
                         );
                         painter.add(shape);
                     }
+                    DrawInstruction::Ellipse(_, _, _) => todo!()
                 }
             }
 

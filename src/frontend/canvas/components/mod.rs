@@ -3,7 +3,9 @@ use egui::ahash::HashSet;
 use egui_macroquad::macroquad::prelude::*;
 use uuid::Uuid;
 
-use crate::{canvas::camera::GridCamera, gui::component_utils::{macroquad_draw_curve, GuiComponentType}};
+use crate::{canvas::{camera::GridCamera, components::draw::AND_GATE_DRAW_INSTRUCTIONS}, gui::component_utils::{macroquad_draw_curve, DrawInstruction, GuiComponentType}};
+
+mod draw;
 
 #[derive(PartialEq, Eq, Copy, Clone)]
 pub enum GateType {
@@ -88,6 +90,20 @@ impl ComponentData {
                 }
             }
             Self::Mux { .. } => "Multiplexer",
+        }
+    }
+
+    pub fn get_draw_data(&self) -> &[DrawInstruction] {
+        match self {
+            Self::Gate { gate_type, .. } => {
+                match gate_type {
+                    GateType::And => &draw::AND_GATE_DRAW_INSTRUCTIONS,
+                    GateType::Or => &draw::OR_GATE_DRAW_INSTRUCTIONS,
+                    GateType::Not => &draw::NOT_GATE_DRAW_INSTRUCTIONS,
+                    _ => &draw::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
+                }
+            }
+            Self::Mux { .. } => todo!(),
         }
     }
 }
@@ -186,7 +202,7 @@ impl ComponentSystem {
             orientation: Orientation::Zero,
             label: String::new(),
             data: ComponentData::Gate {
-                gate_type: GateType::And,
+                gate_type: GateType::Not,
                 bitsize: 32,
             },
         });
@@ -283,7 +299,7 @@ impl ComponentSystem {
             } else {
                 BLACK
             };
-            for i in GuiComponentType::AND_GATE_DRAW_INSTRUCTIONS {
+            for i in component.data.get_draw_data() {
                 macroquad_draw_curve(
                     i,
                     epaint::Rect::from_two_pos(

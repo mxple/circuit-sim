@@ -12,7 +12,17 @@ mod canvas;
 mod gui;
 mod util;
 
-#[macroquad::main("circuitsim")]
+fn window_conf() -> Conf {
+    Conf {
+        window_title: "Circuitsim".to_owned(),
+        // fullscreen: true,
+        sample_count: 4,
+        ..Default::default()
+    }
+}
+
+
+#[macroquad::main(window_conf)]
 async fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mut enable_camera_debug = false;

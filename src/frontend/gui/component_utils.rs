@@ -1,14 +1,15 @@
-use crate::canvas::components::{ComponentData, GateType, Orientation};
+use crate::canvas::components::{rotate_point_ccw, ComponentData, GateType, Orientation};
 use epaint::{Pos2, Rect};
 use egui_macroquad::macroquad::prelude::*;
 
 pub enum DrawInstruction {
     Line([Pos2; 2]),
     CubicBezierCurve([Pos2; 4]),
+    Ellipse(Pos2, f32, f32),
 }
 
 pub fn macroquad_draw_curve(
-    instruction: DrawInstruction,
+    instruction: &DrawInstruction,
     frame: Rect,
     width: f32,
     color: Color,
@@ -36,11 +37,18 @@ pub fn macroquad_draw_curve(
                 prev = point;
             }
         }
+        DrawInstruction::Ellipse(c, r_h, r_v) => {
+            let c = rotate_around_top_left(map_to_frame(c, frame), frame, orientation);
+            let r_h = r_h * frame.width();
+            let r_v = r_v * frame.height();
+            draw_ellipse_lines(c.x, c.y, r_h, r_v, 0., width, color);
+            // draw_ellipse(c.x, c.y, r_h, r_v, 0., color);
+        }
     }
 }
 
 /// Map normalized (0..1) Pos2 into a position inside the given `frame` Rect
-fn map_to_frame(pos: Pos2, frame: Rect) -> Pos2 {
+fn map_to_frame(pos: &Pos2, frame: Rect) -> Pos2 {
     Pos2 {
         x: frame.left() + pos.x * frame.width(),
         y: frame.top() + pos.y * frame.height(),
