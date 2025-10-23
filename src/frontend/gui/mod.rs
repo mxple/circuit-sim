@@ -1,17 +1,20 @@
-use component_utils::CircuitComponentType;
 use egui_macroquad::egui;
 use egui_macroquad::macroquad::prelude::*;
 
+use crate::canvas::components::{Component, ComponentData, GateType, Orientation};
+use crate::canvas::input::CanvasInputState;
+use crate::gui::component_utils::GuiComponentType;
+
 mod component_selector;
-mod component_utils;
+pub mod component_utils;
 mod toolbar;
 
 pub struct App {
     expanded: bool,
-    selected_component: Option<CircuitComponentType>,
-    hotbar_selections: [Option<CircuitComponentType>; Self::NUM_HOTBAR_BUTTONS],
+    selected_component: Option<GuiComponentType>,
+    hotbar_selections: [Option<GuiComponentType>; Self::NUM_HOTBAR_BUTTONS],
     hovered_hotbar_button: Option<usize>,
-    dragged_component: Option<CircuitComponentType>,
+    dragged_component: Option<GuiComponentType>,
 }
 
 impl App {
@@ -28,15 +31,20 @@ impl App {
         }
     }
 
-    pub fn get_selected_component(&mut self) -> Option<CircuitComponentType> {
+    pub fn get_selected_component(&mut self) -> Option<GuiComponentType> {
         self.selected_component
     }
 
-    pub fn set_selected_component(&mut self, component: Option<CircuitComponentType>) {
+    pub fn set_selected_component(&mut self, component: Option<GuiComponentType>, input_state: &mut CanvasInputState) {
         self.selected_component = component;
+        if component.is_some() {
+            *input_state = CanvasInputState::Component;
+        } else {
+            *input_state = CanvasInputState::Idle;
+        }
     }
 
-    pub fn update(&mut self, ctx: &egui::Context) {
+    pub fn update(&mut self, ctx: &egui::Context, input_state: &mut CanvasInputState, selection: &mut [&mut Component]) {
         self.hovered_hotbar_button = None;
         self.dragged_component = None;
         use egui::*;
@@ -59,9 +67,11 @@ impl App {
                 "Native"
             };
             let version = env!("CARGO_PKG_VERSION");
+            let mode = format!("{:?}", input_state);
             ui.horizontal(|ui| {
                 ui.label(format!("Build: {}", build));
                 ui.label(format!("Version: {}", version));
+                ui.label(format!("Mode: {}", mode));
             });
         });
 
@@ -70,23 +80,77 @@ impl App {
             .max_width(screen_width() / 6.)
             .resizable(false)
             .show_animated(ctx, self.expanded, |ui| {
-                ui.label("Components");
-                CollapsingHeader::new("Gates").show(ui, |ui| {
-                    let gates = [
-                        CircuitComponentType::AndGate,
-                        CircuitComponentType::OrGate,
-                        CircuitComponentType::NandGate,
-                        CircuitComponentType::NorGate,
-                        CircuitComponentType::XorGate,
-                        CircuitComponentType::XnorGate,
-                        CircuitComponentType::NotGate,
-                    ];
-                    for gate in gates {
-                        self.circuit_component_button(
-                            ui,
-                            egui::Vec2::new(ui.available_size().x, 60.0),
-                            gate,
-                        );
+                ui.allocate_ui(ui.available_size(), |ui| {
+                    ui.label("Components");
+                    CollapsingHeader::new("Gates").show(ui, |ui| {
+                        let gates = [
+                            GuiComponentType::AndGate,
+                            GuiComponentType::OrGate,
+                            GuiComponentType::NandGate,
+                            GuiComponentType::NorGate,
+                            GuiComponentType::XorGate,
+                            GuiComponentType::XnorGate,
+                            GuiComponentType::NotGate,
+                        ];
+                        for gate in gates {
+                            self.circuit_component_button(
+                                ui,
+                                egui::Vec2::new(ui.available_size().x, 60.0),
+                                gate,
+                                input_state
+                            );
+                        }
+                    });
+                    ui.separator();
+                    fn orientation_dropdown(ui: &mut Ui, data: &mut Orientation) {
+                        ComboBox::from_label("Orientation")
+                            .selected_text(data.get_name())
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(data, Orientation::Zero, Orientation::Zero.get_name());
+                                ui.selectable_value(data, Orientation::One, Orientation::One.get_name());
+                                ui.selectable_value(data, Orientation::Two, Orientation::Two.get_name());
+                                ui.selectable_value(data, Orientation::Three, Orientation::Three.get_name());
+                            });
+                    }
+                    fn gate_type_dropdown(ui: &mut Ui, data: &mut GateType) {
+                        ComboBox::from_label("Gate type")
+                            .selected_text(data.get_name())
+                            .show_ui(ui, |ui| {
+                                ui.selectable_value(data, GateType::And, "AND");
+                                ui.selectable_value(data, GateType::Or, "OR");
+                                ui.selectable_value(data, GateType::Nand, "NAND");
+                                ui.selectable_value(data, GateType::Nor, "NOR");
+                                ui.selectable_value(data, GateType::Xor, "XOR");
+                                ui.selectable_value(data, GateType::Xnor, "XNOR");
+                                ui.selectable_value(data, GateType::Not, "NOT");
+                            });
+                    }
+                    fn bitsize_dropdown(ui: &mut Ui, data: &mut u8) {
+                        ComboBox::from_label("Bitsize")
+                            .selected_text(data.to_string())
+                            .show_ui(ui, |ui| {
+                                for i in 1..=32 {
+                                    ui.selectable_value(data, i, i.to_string());
+                                }
+                            });
+                    }
+                    if selection.len() == 1 && let Some(c) = selection.get_mut(0) {
+                        ui.label(c.data.get_name());
+                        orientation_dropdown(ui, &mut c.orientation);
+                        match (*c).data {
+                            ComponentData::Gate {
+                                ref mut gate_type,
+                                ref mut bitsize
+                            } => {
+                                gate_type_dropdown(ui, gate_type);
+                                bitsize_dropdown(ui, bitsize);
+                            }
+                            ComponentData::Mux {
+                                ref mut bitsize
+                            } => {
+                                bitsize_dropdown(ui, bitsize);
+                            }
+                        }
                     }
                 });
             });
@@ -116,11 +180,7 @@ impl App {
                 );
             });
 
-        SidePanel::right("Right").show(ctx, |ui| {
-            ui.label("test1");
-        });
-
-        self.render_toolbar(ctx);
+        self.render_toolbar(ctx, input_state);
 
         // Ensure that each component can only be in one hotbar slot at a time
         if let Some(hovered_index) = self.hovered_hotbar_button

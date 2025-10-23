@@ -5,4 +5,6 @@
 
 pub mod camera;
 pub mod grid;
+pub mod input;
 pub mod wiring;
+pub mod components;
