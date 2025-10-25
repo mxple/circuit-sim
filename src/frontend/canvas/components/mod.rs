@@ -3,7 +3,7 @@ use egui::ahash::HashSet;
 use egui_macroquad::macroquad::prelude::*;
 use uuid::Uuid;
 
-use crate::{canvas::{camera::GridCamera, components::draw::AND_GATE_DRAW_INSTRUCTIONS}, gui::component_utils::{macroquad_draw_curve, DrawInstruction, GuiComponentType}};
+use crate::{canvas::{camera::GridCamera}, gui::component_utils::{macroquad_draw_curve, DrawInstruction}};
 
 mod draw;
 
@@ -15,7 +15,6 @@ pub enum GateType {
     Nor,
     Xor,
     Xnor,
-    Not,
 }
 
 impl GateType {
@@ -27,7 +26,6 @@ impl GateType {
             Self::Nor => "NOR",
             Self::Xor => "XOR",
             Self::Xnor => "XNOR",
-            Self::Not => "NOT",
         }
     }
 }
@@ -35,6 +33,10 @@ impl GateType {
 pub enum ComponentData {
     Gate {
         gate_type: GateType,
+        bitsize: u8,
+        num_inputs: u8,
+    },
+    NotGate {
         bitsize: u8,
     },
     Mux {
@@ -45,33 +47,27 @@ pub enum ComponentData {
 impl ComponentData {
     pub fn get_size(&self) -> (i32, i32) {
         match self {
-            Self::Gate { gate_type, .. } => if *gate_type == GateType::Not {
-                (3, 1)
-            } else {
-                (4, 3)
-            },
+            Self::Gate { .. } => (4, 3),
+            Self::NotGate { .. } => (3,1),
             Self::Mux { .. } => todo!(),
         }
     }
 
     pub fn get_input_offsets(&self) -> Vec<(i32, i32)> {
         match self {
-            Self::Gate { gate_type, .. } => if *gate_type == GateType::Not {
-                vec![(0, 0)]
-            } else {
-                vec![(0, 0), (0, 2)]
-            },
+            Self::Gate { num_inputs, .. } => Vec::from_iter(
+                (0..*num_inputs)
+                .map(|x| (0, 2 * (x as i32) - (*num_inputs as i32 - 2)))
+            ),
+            Self::NotGate { .. } => vec![(0, 0)],
             Self::Mux { .. } => todo!(),
         }
     }
 
     pub fn get_output_offsets(&self) -> Vec<(i32, i32)> {
         match self {
-            Self::Gate { gate_type, .. } => if *gate_type == GateType::Not {
-                vec![(2, 0)]
-            } else {
-                vec![(3, 1)]
-            }
+            Self::Gate { .. } => vec![(3, 1)],
+            Self::NotGate { .. } => vec![(2, 0)],
             Self::Mux { .. } => todo!(),
         }
     }
@@ -86,9 +82,9 @@ impl ComponentData {
                     GateType::Nor => "NOR gate",
                     GateType::Xor => "XOR gate",
                     GateType::Xnor => "XNOR gate",
-                    GateType::Not => "NOT gate",
                 }
             }
+            Self::NotGate { .. } => "NOT gate",
             Self::Mux { .. } => "Multiplexer",
         }
     }
@@ -103,10 +99,9 @@ impl ComponentData {
                     GateType::Nor => &draw::NOR_GATE_DRAW_INSTRUCTIONS,
                     GateType::Xor => &draw::XOR_GATE_DRAW_INSTRUCTIONS,
                     GateType::Xnor => &draw::XNOR_GATE_DRAW_INSTRUCTIONS,
-                    GateType::Not => &draw::NOT_GATE_DRAW_INSTRUCTIONS,
-                    _ => &draw::UNIMPLEMENTED_DRAW_INSTRUCTIONS,
                 }
             }
+            Self::NotGate { .. } => &draw::NOT_GATE_DRAW_INSTRUCTIONS,
             Self::Mux { .. } => todo!(),
         }
     }
@@ -208,6 +203,7 @@ impl ComponentSystem {
             data: ComponentData::Gate {
                 gate_type: GateType::Xnor,
                 bitsize: 32,
+                num_inputs: 2,
             },
         });
         a

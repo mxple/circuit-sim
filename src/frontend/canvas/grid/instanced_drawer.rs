@@ -133,9 +133,7 @@ impl InstancedDrawer {
     fn generate_grid_lines(&self, camera: &GridCamera) -> Vec<GridLineInstance> {
         let (view_min, view_max) = camera.get_view_bounds();
         
-        let start_x = view_min.x.floor();
         let end_x = view_max.x.ceil();
-        let start_y = view_min.y.floor();
         let end_y = view_max.y.ceil();
         
         let mut instances = Vec::new();

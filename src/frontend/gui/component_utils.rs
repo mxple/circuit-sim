@@ -1,4 +1,4 @@
-use crate::canvas::components::{rotate_point_ccw, ComponentData, GateType, Orientation};
+use crate::canvas::components::{ComponentData, GateType, Orientation};
 use epaint::{Pos2, Rect};
 use egui_macroquad::macroquad::prelude::*;
 
@@ -110,29 +110,34 @@ impl GuiComponentType {
             Self::AndGate => ComponentData::Gate {
                 gate_type: GateType::And,
                 bitsize: 1,
+                num_inputs: 2,
             },
             Self::OrGate => ComponentData::Gate {
                 gate_type: GateType::Or,
                 bitsize: 1,
+                num_inputs: 2,
             },
             Self::NandGate => ComponentData::Gate {
                 gate_type: GateType::Nand,
                 bitsize: 1,
+                num_inputs: 2,
             },
             Self::NorGate => ComponentData::Gate {
                 gate_type: GateType::Nor,
                 bitsize: 1,
+                num_inputs: 2,
             },
             Self::XorGate => ComponentData::Gate {
                 gate_type: GateType::Xor,
                 bitsize: 1,
+                num_inputs: 2,
             },
             Self::XnorGate => ComponentData::Gate {
                 gate_type: GateType::Xnor,
                 bitsize: 1,
+                num_inputs: 2,
             },
-            Self::NotGate => ComponentData::Gate {
-                gate_type: GateType::Not,
+            Self::NotGate => ComponentData::NotGate {
                 bitsize: 1,
             },
         }

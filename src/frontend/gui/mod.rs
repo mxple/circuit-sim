@@ -122,11 +122,19 @@ impl App {
                                 ui.selectable_value(data, GateType::Nor, "NOR");
                                 ui.selectable_value(data, GateType::Xor, "XOR");
                                 ui.selectable_value(data, GateType::Xnor, "XNOR");
-                                ui.selectable_value(data, GateType::Not, "NOT");
                             });
                     }
                     fn bitsize_dropdown(ui: &mut Ui, data: &mut u8) {
                         ComboBox::from_label("Bitsize")
+                            .selected_text(data.to_string())
+                            .show_ui(ui, |ui| {
+                                for i in 1..=32 {
+                                    ui.selectable_value(data, i, i.to_string());
+                                }
+                            });
+                    }
+                    fn num_inputs_dropdown(ui: &mut Ui, data: &mut u8) {
+                        ComboBox::from_label("# inputs")
                             .selected_text(data.to_string())
                             .show_ui(ui, |ui| {
                                 for i in 1..=32 {
@@ -140,9 +148,14 @@ impl App {
                         match (*c).data {
                             ComponentData::Gate {
                                 ref mut gate_type,
-                                ref mut bitsize
+                                ref mut bitsize,
+                                ref mut num_inputs,
                             } => {
                                 gate_type_dropdown(ui, gate_type);
+                                bitsize_dropdown(ui, bitsize);
+                                num_inputs_dropdown(ui, num_inputs);
+                            }
+                            ComponentData::NotGate { ref mut bitsize }  => {
                                 bitsize_dropdown(ui, bitsize);
                             }
                             ComponentData::Mux {

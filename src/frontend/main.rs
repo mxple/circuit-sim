@@ -1,7 +1,7 @@
 use egui_macroquad::macroquad::prelude::*;
 
 use crate::canvas::camera::GridCamera;
-use crate::canvas::components::{ComponentData, ComponentSystem};
+use crate::canvas::components::ComponentSystem;
 use crate::canvas::grid::GridDrawer;
 use crate::canvas::input::{CanvasInput, CanvasInputState};
 use crate::canvas::wiring::WireSystem;
@@ -96,7 +96,7 @@ async fn main() {
             } else if input.state == CanvasInputState::Idle {
                 let draw_selection = cs.update_selection(input.in_progress_selection, input.selection);
                 if draw_selection {
-                    input.draw_selection(&camera);
+                    input.draw_selection();
                 }
             }
 

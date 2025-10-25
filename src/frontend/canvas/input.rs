@@ -78,7 +78,7 @@ impl CanvasInput {
         // }
     }
 
-    pub fn draw_selection(&self, camera: &GridCamera) {
+    pub fn draw_selection(&self) {
         if let Some((c1, c2)) = self.in_progress_selection {
             draw_rectangle(
                 c1.0 as f32,
