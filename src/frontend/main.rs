@@ -1,4 +1,6 @@
-use egui_macroquad::macroquad::prelude::*;
+use std::time;
+
+use egui_macroquad::macroquad::{prelude::*, rand::srand};
 
 use crate::canvas::camera::GridCamera;
 use crate::canvas::components::ComponentSystem;
@@ -24,6 +26,13 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+    // let millis = time::SystemTime::now()
+    //     .duration_since(time::UNIX_EPOCH)
+    //     .expect("Time went backwards")
+    //     .as_millis() as u64;
+    srand(1);
+
+
     let args: Vec<String> = std::env::args().collect();
     let mut enable_camera_debug = false;
     let mut enable_profiler_debug = false;

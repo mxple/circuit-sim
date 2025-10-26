@@ -1,7 +1,6 @@
-use std::{collections::HashMap, ops::Neg};
+use std::{collections::HashMap, ops::{Neg, Shl}};
 use egui::ahash::HashSet;
-use egui_macroquad::macroquad::prelude::*;
-use uuid::Uuid;
+use egui_macroquad::macroquad::{prelude::*, rand::{srand, rand}};
 
 use crate::{canvas::{camera::GridCamera}, gui::component_utils::{macroquad_draw_curve, DrawInstruction}};
 
@@ -55,10 +54,22 @@ impl ComponentData {
 
     pub fn get_input_offsets(&self) -> Vec<(i32, i32)> {
         match self {
-            Self::Gate { num_inputs, .. } => Vec::from_iter(
-                (0..*num_inputs)
-                .map(|x| (0, 2 * (x as i32) - (*num_inputs as i32 - 2)))
-            ),
+            Self::Gate { num_inputs, .. } => if *num_inputs == 2 {
+                vec![(0, 0), (0, 2)]
+            } else if num_inputs % 2 != 0 {
+                Vec::from_iter(
+                    (0..*num_inputs)
+                    .map(|x| (0, (x as i32) - (*num_inputs as i32 / 2 - 1)))
+                )
+            } else {
+                let top = (0..*num_inputs / 2)
+                    .map(|x| (0, (x as i32) + 2));
+                let bot = (0..*num_inputs / 2)
+                    .map(|x| (0, -(x as i32)));
+                Vec::from_iter(
+                    top.chain(bot)
+                )
+            },
             Self::NotGate { .. } => vec![(0, 0)],
             Self::Mux { .. } => todo!(),
         }
@@ -138,7 +149,7 @@ pub fn rotate_point_ccw<T: Neg<Output = T>>((x, y): (T, T), orientation: Orienta
 }
 
 pub struct Component {
-    uuid: Uuid,
+    uuid: u64,
     pub orientation: Orientation,
     pub label: String,
     pub data: ComponentData
@@ -188,16 +199,20 @@ impl Component {
 #[derive(Default)]
 pub struct ComponentSystem {
     components: HashMap<(i32, i32), Component>,
-    selection: HashSet<Uuid>,
+    selection: HashSet<u64>,
     drag_delta: (i32, i32),
     drag_handled: bool,
+}
+
+fn random_u64() -> u64 {
+    ((rand() as u64) << 32) + rand() as u64
 }
 
 impl ComponentSystem {
     pub fn new() -> Self {
         let mut a = Self::default();
         a.components.insert((0, 0), Component {
-            uuid: Uuid::new_v4(), 
+            uuid: random_u64(), 
             orientation: Orientation::Zero,
             label: String::new(),
             data: ComponentData::Gate {
@@ -219,7 +234,7 @@ impl ComponentSystem {
             self.components.insert(
                 end_pos,
                 Component {
-                    uuid: Uuid::new_v4(),
+                    uuid: random_u64(),
                     orientation: Orientation::Zero,
                     label: String::new(),
                     data: selected_component,
